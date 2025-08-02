@@ -13,7 +13,8 @@
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F @monorepo/backend dev",
-    "dev:setup": "turbo -F @monorepo/backend dev:setup"
+    "dev:setup": "turbo -F @monorepo/backend dev:setup",
+    "clean": "rm -rf node_modules dist pnpm-lock.yaml && pnpm store prune & find . -type d \\( -name 'node_modules' -o -name 'dist' -o -name '.output' -o -name '.vinxi' -o -name '.cache' -o -name '.expo' -o -name '.turbo' \\) -prune -exec rm -rf {} + & wait"
   },
   "dependencies": {},
   "devDependencies": {
