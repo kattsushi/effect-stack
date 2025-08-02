@@ -11,7 +11,7 @@
       "**",
       "!**/.next",
       "!**/dist",
-      "!**/.turbo",
+      "!**/.nx",
       "!**/dev-dist",
       "!**/.zed",
       "!**/.vscode",
@@ -22,7 +22,8 @@
       "!**/.expo",
       "!**/.wrangler",
       "!**/.source",
-      "!**/_generated"
+      "!**/_generated",
+      "!**/tsconfig.json"
     ]
   },
   "formatter": {

@@ -7,26 +7,26 @@
   ],
   "scripts": {
     "check": "biome check --write .",
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "check-types": "turbo check-types",
-    "dev:native": "turbo -F native dev",
-    "dev:web": "turbo -F web dev",
-    "dev:server": "turbo -F @monorepo/backend dev",
-    "dev:setup": "turbo -F @monorepo/backend dev:setup",
-    "clean": "rm -rf node_modules dist pnpm-lock.yaml && pnpm store prune & find . -type d \\( -name 'node_modules' -o -name 'dist' -o -name '.output' -o -name '.vinxi' -o -name '.cache' -o -name '.expo' -o -name '.turbo' \\) -prune -exec rm -rf {} + & wait"
+    "dev": "nx run-many -t dev",
+    "build": "nx run-many -t build",
+    "check-types": "nx run-many -t check-types",
+    "dev:native": "nx dev native",
+    "dev:web": "nx dev web",
+    "dev:server": "nx dev @monorepo/backend",
+    "dev:setup": "nx dev:setup @monorepo/backend",
+    "clean": "rm -rf node_modules dist pnpm-lock.yaml && pnpm store prune & find . -type d \\( -name 'node_modules' -o -name 'dist' -o -name '.output' -o -name '.vinxi' -o -name '.cache' -o -name '.expo' -o -name '.nx' \\) -prune -exec rm -rf {} + & wait"
   },
   "dependencies": {},
   "devDependencies": {
-    "turbo": "^2.5.4",
     "@biomejs/biome": "2.1.3",
     "ultracite": "5.1.1",
     "husky": "9.1.7",
-    "lint-staged": "16.1.2"
+    "lint-staged": "16.1.2",
+    "nx": "21.3.11"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
-      "npx ultracite format"
+      "pnpm dlx ultracite format"
     ]
   },
   "packageManager": "pnpm@10.14.0"

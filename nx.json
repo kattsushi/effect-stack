@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "sharedGlobals": [
+      "{workspaceRoot}/.env*",
+      {
+        "env": "EXPO_PUBLIC_*"
+      }
+    ],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "{projectRoot}/**/*",
+        "{projectRoot}/.env*"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/**",
+        "{projectRoot}/.expo/**",
+        "{projectRoot}/web-build/**"
+      ],
+      "cache": true
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ],
+      "cache": true
+    },
+    "check-types": {
+      "dependsOn": [
+        "^check-types"
+      ],
+      "cache": true
+    },
+    "dev": {
+      "cache": false
+    },
+    "dev:setup": {
+      "cache": false
+    },
+    "android": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "ios": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "{projectRoot}/**/*",
+        "{projectRoot}/.env*",
+        "{projectRoot}/app.json",
+        "{projectRoot}/app.config.*"
+      ],
+      "outputs": [
+        "{projectRoot}/android/**",
+        "{projectRoot}/ios/**"
+      ],
+      "cache": true
+    }
+  },
+  "defaultBase": "master"
+}

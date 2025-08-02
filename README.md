@@ -14,7 +14,7 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **Biome** - Linting and formatting
 - **Husky** - Git hooks for code quality
 - **PWA** - Progressive Web App support
-- **Turborepo** - Optimized monorepo build system
+- **NX** - Smart monorepo build system with advanced caching and task orchestration
 
 ## Getting Started
 

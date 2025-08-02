@@ -1,0 +1,61 @@
+{
+  "name": "native",
+  "sourceRoot": "apps/native",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo start --clear",
+        "cwd": "apps/native"
+      }
+    },
+    "android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo run:android",
+        "cwd": "apps/native"
+      },
+      "dependsOn": ["^build"]
+    },
+    "ios": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo run:ios",
+        "cwd": "apps/native"
+      },
+      "dependsOn": ["^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo prebuild",
+        "cwd": "apps/native"
+      },
+      "dependsOn": ["^build"]
+    },
+    "web": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo start --web",
+        "cwd": "apps/native"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "expo export",
+        "cwd": "apps/native"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "check-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/native"
+      }
+    }
+  },
+  "tags": ["type:app", "platform:mobile"]
+}

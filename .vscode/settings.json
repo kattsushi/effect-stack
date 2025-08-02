@@ -1,5 +1,5 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "biomejs.biome",
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
@@ -31,5 +31,24 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit",
     "source.organizeImports.biome": "explicit"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.tanstack": true,
+    "**/node_modules": true,
+    "**/.cache": true,
+    "**/.expo": true,
+    ".nitro": true,
+    ".output": true,
+    ".nx": true,
+    "tmp": true,
+    "**/dist": false,
+    "node_modules": true,
+    ".husky": true,
+    "pnpm-lock.yaml": true
   }
 }
