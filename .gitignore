@@ -1,2 +1,4 @@
 node_modules
 .turbo
+_generated
+routeTree.gen.ts
