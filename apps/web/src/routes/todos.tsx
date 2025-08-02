@@ -1,66 +1,59 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { convexQuery } from '@convex-dev/react-query'
+import { api } from '@monorepo/backend/convex/_generated/api'
+import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
+import { useMutation } from 'convex/react'
+import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { convexQuery } from "@convex-dev/react-query";
-import { useMutation } from "convex/react";
-import { api } from "@monorepo/backend/convex/_generated/api";
-import type { Id } from "@monorepo/backend/convex/_generated/dataModel";
-
-export const Route = createFileRoute("/todos")({
+export const Route = createFileRoute('/todos')({
   component: TodosRoute,
-});
+})
 
 function TodosRoute() {
-  const [newTodoText, setNewTodoText] = useState("");
+  const [newTodoText, setNewTodoText] = useState('')
 
-  const todosQuery = useSuspenseQuery(convexQuery(api.todos.getAll, {}));
-  const todos = todosQuery.data;
+  const todosQuery = useSuspenseQuery(convexQuery(api.todos.getAll, {}))
+  const todos = todosQuery.data
 
-  const createTodo = useMutation(api.todos.create);
-  const toggleTodo = useMutation(api.todos.toggle);
-  const removeTodo = useMutation(api.todos.deleteTodo);
+  const createTodo = useMutation(api.todos.create)
+  const toggleTodo = useMutation(api.todos.toggle)
+  const removeTodo = useMutation(api.todos.deleteTodo)
 
   const handleAddTodo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = newTodoText.trim();
+    e.preventDefault()
+    const text = newTodoText.trim()
     if (text) {
-      setNewTodoText("");
+      setNewTodoText('')
       try {
-        await createTodo({ text });
+        await createTodo({ text })
       } catch (error) {
-        console.error("Failed to add todo:", error);
-        setNewTodoText(text);
+        console.error('Failed to add todo:', error)
+        setNewTodoText(text)
       }
     }
-  };
+  }
 
-  const handleToggleTodo = async (id: Id<"todos">, completed: boolean) => {
+  const handleToggleTodo = async (id: Id<'todos'>, completed: boolean) => {
     try {
-      await toggleTodo({ id, completed: !completed });
+      await toggleTodo({ id, completed: !completed })
     } catch (error) {
-      console.error("Failed to toggle todo:", error);
+      console.error('Failed to toggle todo:', error)
     }
-  };
+  }
 
-  const handleDeleteTodo = async (id: Id<"todos">) => {
+  const handleDeleteTodo = async (id: Id<'todos'>) => {
     try {
-      await removeTodo({ id });
+      await removeTodo({ id })
     } catch (error) {
-      console.error("Failed to delete todo:", error);
+      console.error('Failed to delete todo:', error)
     }
-  };
+  }
 
   return (
     <div className="mx-auto w-full max-w-md py-10">
@@ -70,19 +63,13 @@ function TodosRoute() {
           <CardDescription>Manage your tasks efficiently</CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={handleAddTodo}
-            className="mb-6 flex items-center space-x-2"
-          >
+          <form className="mb-6 flex items-center space-x-2" onSubmit={handleAddTodo}>
             <Input
-              value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
               placeholder="Add a new task..."
+              value={newTodoText}
             />
-            <Button
-              type="submit"
-              disabled={!newTodoText.trim()}
-            >
+            <Button disabled={!newTodoText.trim()} type="submit">
               Add
             </Button>
           </form>
@@ -92,34 +79,25 @@ function TodosRoute() {
           ) : (
             <ul className="space-y-2">
               {todos?.map((todo) => (
-                <li
-                  key={todo._id}
-                  className="flex items-center justify-between rounded-md border p-2"
-                >
+                <li className="flex items-center justify-between rounded-md border p-2" key={todo._id}>
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       checked={todo.completed}
-                      onCheckedChange={() =>
-                        handleToggleTodo(todo._id, todo.completed)
-                      }
                       id={`todo-${todo._id}`}
+                      onCheckedChange={() => handleToggleTodo(todo._id, todo.completed)}
                     />
                     <label
+                      className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}
                       htmlFor={`todo-${todo._id}`}
-                      className={`${
-                        todo.completed
-                          ? "text-muted-foreground line-through"
-                          : ""
-                      }`}
                     >
                       {todo.text}
                     </label>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteTodo(todo._id)}
                     aria-label="Delete todo"
+                    onClick={() => handleDeleteTodo(todo._id)}
+                    size="icon"
+                    variant="ghost"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -130,5 +108,5 @@ function TodosRoute() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

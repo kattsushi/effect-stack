@@ -7,20 +7,12 @@
         "env": "EXPO_PUBLIC_*"
       }
     ],
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ]
+    "default": ["{projectRoot}/**/*", "sharedGlobals"]
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "{projectRoot}/**/*",
-        "{projectRoot}/.env*"
-      ],
+      "dependsOn": ["^build"],
+      "inputs": ["{projectRoot}/**/*", "{projectRoot}/.env*"],
       "outputs": [
         "{projectRoot}/dist/**",
         "{projectRoot}/.expo/**",
@@ -29,15 +21,11 @@
       "cache": true
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ],
+      "dependsOn": ["^lint"],
       "cache": true
     },
     "check-types": {
-      "dependsOn": [
-        "^check-types"
-      ],
+      "dependsOn": ["^check-types"],
       "cache": true
     },
     "dev": {
@@ -47,31 +35,22 @@
       "cache": false
     },
     "android": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "ios": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "prebuild": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "inputs": [
         "{projectRoot}/**/*",
         "{projectRoot}/.env*",
         "{projectRoot}/app.json",
         "{projectRoot}/app.config.*"
       ],
-      "outputs": [
-        "{projectRoot}/android/**",
-        "{projectRoot}/ios/**"
-      ],
+      "outputs": ["{projectRoot}/android/**", "{projectRoot}/ios/**"],
       "cache": true
     }
   },

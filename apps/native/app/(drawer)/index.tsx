@@ -1,39 +1,35 @@
-import { View, Text, ScrollView } from "react-native";
-import { Container } from "@/components/container";
-import { useQuery } from "convex/react";
-import { api } from "@monorepo/backend/convex/_generated/api";
+import { api } from '@monorepo/backend/convex/_generated/api'
+import { useQuery } from 'convex/react'
+import { ScrollView, Text, View } from 'react-native'
+import { Container } from '@/components/container'
 
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get);
+  const healthCheck = useQuery(api.healthCheck.get)
+
+  const getHealthStatus = () => {
+    if (healthCheck === undefined) {
+      return 'Checking connection...'
+    }
+    if (healthCheck === 'OK') {
+      return 'All systems operational'
+    }
+    return 'Service unavailable'
+  }
 
   return (
     <Container>
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        <Text className="font-mono text-foreground text-3xl font-bold mb-4">
-			BETTER T STACK
-		</Text>
-        <View className="bg-card border border-border rounded-xl p-6 mb-6 shadow-sm">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <Text className="mb-4 font-bold font-mono text-3xl text-foreground">BETTER T STACK</Text>
+        <View className="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm">
           <View className="flex-row items-center gap-3">
-            <View
-              className={`h-3 w-3 rounded-full ${
-                  healthCheck ? "bg-green-500" : "bg-orange-500"
-              }`}
-            />
+            <View className={`h-3 w-3 rounded-full ${healthCheck ? 'bg-green-500' : 'bg-orange-500'}`} />
             <View className="flex-1">
-              <Text className="text-sm font-medium text-card-foreground">
-                Convex
-              </Text>
-              <Text className="text-xs text-muted-foreground">
-                {healthCheck === undefined
-                  ? "Checking connection..."
-                  : healthCheck === "OK"
-                    ? "All systems operational"
-                    : "Service unavailable"}
-              </Text>
+              <Text className="font-medium text-card-foreground text-sm">Convex</Text>
+              <Text className="text-muted-foreground text-xs">{getHealthStatus()}</Text>
             </View>
           </View>
         </View>
       </ScrollView>
     </Container>
-  );
+  )
 }

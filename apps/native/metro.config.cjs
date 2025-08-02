@@ -25,23 +25,23 @@ module.exports = config
  * This allows Metro to resolve modules from the monorepo.
  *
  * @see https://docs.expo.dev/guides/monorepos/#modify-the-metro-config
- * @param {import('expo/metro-config').MetroConfig} config
+ * @param {import('expo/metro-config').MetroConfig} metroConfig
  * @returns {import('expo/metro-config').MetroConfig}
  */
-function withMonorepoPaths(config) {
+function withMonorepoPaths(metroConfig) {
   const projectRoot = __dirname
   const workspaceRoot = path.resolve(projectRoot, '../..')
 
   // #1 - Watch all files in the monorepo
-  config.watchFolders = [workspaceRoot]
+  metroConfig.watchFolders = [workspaceRoot]
 
   // #2 - Resolve modules within the project's `node_modules` first, then all monorepo modules
-  config.resolver.nodeModulesPaths = [
+  metroConfig.resolver.nodeModulesPaths = [
     path.resolve(projectRoot, 'node_modules'),
     path.resolve(workspaceRoot, 'node_modules'),
   ]
 
-  return config
+  return metroConfig
 }
 
 /**
@@ -49,10 +49,10 @@ function withMonorepoPaths(config) {
  * If you have any environment variables, you can configure NX to invalidate it when needed.
  *
  * @see https://nx.dev/concepts/how-caching-works
- * @param {import('expo/metro-config').MetroConfig} config
+ * @param {import('expo/metro-config').MetroConfig} metroConfig
  * @returns {import('expo/metro-config').MetroConfig}
  */
-function withNxManagedCache(config) {
-  config.cacheStores = [new FileStore({ root: path.join(__dirname, '.cache/metro') })]
-  return config
+function withNxManagedCache(metroConfig) {
+  metroConfig.cacheStores = [new FileStore({ root: path.join(__dirname, '.cache/metro') })]
+  return metroConfig
 }

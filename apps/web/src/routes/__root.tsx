@@ -1,52 +1,46 @@
-import { Toaster } from "@/components/ui/sonner";
+import type { QueryClient } from '@tanstack/react-query'
 
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-  useRouterState,
-} from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import Header from "../components/header";
-import appCss from "../index.css?url";
-import type { QueryClient } from "@tanstack/react-query";
-import Loader from "@/components/loader";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import Loader from '@/components/loader'
+import { Toaster } from '@/components/ui/sonner'
+import Header from '../components/header'
+import appCss from '../index.css?url'
 
 export interface RouterAppContext {
-  queryClient: QueryClient;
+  queryClient: QueryClient
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        charSet: "utf-8",
+        charSet: 'utf-8',
       },
       {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "My App",
+        title: 'My App',
       },
     ],
     links: [
       {
-        rel: "stylesheet",
+        rel: 'stylesheet',
         href: appCss,
       },
     ],
   }),
 
   component: RootDocument,
-});
+})
 
 function RootDocument() {
-  const isFetching = useRouterState({ select: (s) => s.isLoading });
+  const isFetching = useRouterState({ select: (s) => s.isLoading })
 
   return (
-    <html lang="en" className="dark">
+    <html className="dark" lang="en">
       <head>
         <HeadContent />
       </head>
@@ -60,5 +54,5 @@ function RootDocument() {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
