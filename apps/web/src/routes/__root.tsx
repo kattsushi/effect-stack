@@ -1,9 +1,9 @@
+import type { QueryClient } from '@tanstack/react-query'
 
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import Loader from '@/components/loader'
 import { Toaster } from '@/components/ui/sonner'
-import type { QueryClient } from '@tanstack/react-query'
 import Header from '../components/header'
 import appCss from '../index.css?url'
 
@@ -13,7 +13,8 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
-    meta: [{
+    meta: [
+      {
         charSet: 'utf-8',
       },
       {
@@ -36,7 +37,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 })
 
 function RootDocument() {
-  const isFetching = useRouterState({ select: (s) => s.isLoading })
+  const isFetching = useRouterState({ select: (s: { isLoading: unknown }) => s.isLoading })
 
   return (
     <html className="dark" lang="en">

@@ -73,7 +73,6 @@ function TodosRoute() {
               Add
             </Button>
           </form>
-
           {todos?.length === 0 ? (
             <p className="py-4 text-center">No todos yet. Add one above!</p>
           ) : (

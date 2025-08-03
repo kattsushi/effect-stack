@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky && ts-patch install -s",
+    "prepare": "husky",
     "check": "biome check --write .",
     "dev": "nx run-many -t dev",
     "build": "nx run-many -t build",
@@ -27,10 +27,8 @@
     "jiti": "2.4.2",
     "lint-staged": "16.1.2",
     "nx": "21.3.11",
-    "ts-patch": "3.3.0",
     "ultracite": "5.1.1",
-    "vite": "^6.0.0",
-    "vitest": "^3.0.0"
+    "vite": "7.0.6"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [

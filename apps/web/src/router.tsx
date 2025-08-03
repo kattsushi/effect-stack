@@ -10,7 +10,7 @@ import './index.css'
 export function createRouter() {
   const CONVEX_URL = import.meta.env.VITE_CONVEX_URL
   if (!CONVEX_URL) {
-    throw new Error('missing envar VITE_CONVEX_URL')
+    console.error('missing envar VITE_CONVEX_URL')
   }
   const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
 

@@ -24,16 +24,26 @@ const TITLE_TEXT = `
  `
 
 function HomeComponent() {
-  const healthCheck = useSuspenseQuery(convexQuery(api.healthCheck.get, {}))
+  const healthCheck = useSuspenseQuery(convexQuery(api.healthcheck.get, {}))
 
   const getStatusColor = () => {
-    if (healthCheck.data === 'OK') {
-      return 'bg-green-500'
-    }
     if (healthCheck.isLoading) {
       return 'bg-orange-400'
     }
+    if (healthCheck.data === 'OK') {
+      return 'bg-green-500'
+    }
     return 'bg-red-500'
+  }
+
+  const getStatusText = () => {
+    if (healthCheck.isLoading) {
+      return 'Checking...'
+    }
+    if (healthCheck.data === 'OK') {
+      return 'Connected'
+    }
+    return 'Error'
   }
 
   return (
@@ -44,17 +54,7 @@ function HomeComponent() {
           <h2 className="mb-2 font-medium">API Status</h2>
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${getStatusColor()}`} />
-            <span className="text-muted-foreground text-sm">
-              {(() => {
-                if (healthCheck.isLoading) {
-                  return 'Checking...'
-                }
-                if (healthCheck.data === 'OK') {
-                  return 'Connected'
-                }
-                return 'Error'
-              })()}
-            </span>
+            <span className="text-muted-foreground text-sm">{getStatusText()}</span>
           </div>
         </section>
       </div>
