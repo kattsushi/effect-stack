@@ -1,5 +1,15 @@
 {
-  "compilerOptions": {
-    "strictNullChecks": true
-  }
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./apps/native"
+    },
+    {
+      "path": "./packages/backend"
+    }
+  ]
 }

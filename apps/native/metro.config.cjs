@@ -18,6 +18,11 @@ config.resolver.unstable_enablePackageExports = true
 
 config.resolver.disableHierarchicalLookup = true
 
+// Add alias support for @ paths
+config.resolver.alias = {
+  '@': __dirname,
+}
+
 module.exports = config
 
 /**

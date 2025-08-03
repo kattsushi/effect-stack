@@ -1,5 +1,5 @@
 {
-  "name": "native",
+  "name": "@monorepo/native",
   "sourceRoot": "apps/native",
   "projectType": "application",
   "targets": {

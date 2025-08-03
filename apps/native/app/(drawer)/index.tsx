@@ -4,7 +4,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { Container } from '@/components/container'
 
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get)
+  const healthCheck = useQuery(api.healthcheck.get)
 
   const getHealthStatus = () => {
     if (healthCheck === undefined) {
