@@ -22,7 +22,7 @@
       "!**/.expo",
       "!**/.wrangler",
       "!**/.source",
-      "!**/_generated",
+      "!**/convex/_generated",
       "!**/tsconfig.json"
     ]
   },

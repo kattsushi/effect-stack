@@ -1,0 +1,29 @@
+{
+  "$schema": "./../../node_modules/nx/schemas/project-schema.json",
+  "name": "@monorepo/web",
+  "projectType": "application",
+  "sourceRoot": "apps/web/src",
+  "targets": {
+    "dev:watch": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["vite", "nx run @monorepo/web:watch-deps "],
+        "cwd": "apps/web",
+        "parallel": true
+      }
+    },
+    "dev:server:watch": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx serve @effectify/node-auth-app",
+          "vite",
+          "nx run @monorepo/web:watch-deps "
+        ],
+        "cwd": "apps/web",
+        "parallel": true
+      }
+    }
+  },
+  "tags": ["react-start"]
+}
