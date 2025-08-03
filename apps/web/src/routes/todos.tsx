@@ -1,15 +1,15 @@
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
+import { Button } from '@monorepo/web-ui/components/primitives/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/web-ui/components/primitives/card'
+import { Checkbox } from '@monorepo/web-ui/components/primitives/checkbox'
+import { Input } from '@monorepo/web-ui/components/primitives/input'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from 'convex/react'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
 
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,

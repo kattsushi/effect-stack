@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 
-export default function Header() {
+function Header() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/todos', label: 'Todos' },
@@ -24,3 +24,5 @@ export default function Header() {
     </div>
   )
 }
+
+export { Header }

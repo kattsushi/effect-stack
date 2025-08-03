@@ -5,17 +5,17 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/index.css",
-    "baseColor": "neutral",
+    "css": "../../packages/web/ui/src/styles/global.css",
+    "baseColor": "zinc",
     "cssVariables": true,
     "prefix": ""
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "@monorepo/web-ui/components/primitives",
+    "utils": "@monorepo/web-ui/lib/utils",
+    "ui": "@monorepo/web-ui/components/primitives",
+    "lib": "@monorepo/web-ui/utils",
+    "hooks": "@monorepo/web-ui/hooks"
   },
   "iconLibrary": "lucide"
 }

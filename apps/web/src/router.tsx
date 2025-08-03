@@ -1,9 +1,9 @@
 import { ConvexQueryClient } from '@convex-dev/react-query'
+import { Loader } from '@monorepo/web-ui/components/primitives/loader'
 import { QueryClient } from '@tanstack/react-query'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { routerWithQueryClient } from '@tanstack/react-router-with-query'
 import { ConvexProvider } from 'convex/react'
-import Loader from './components/loader'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 

@@ -1,11 +1,10 @@
+import { Header } from '@monorepo/web-ui/components/header'
+import { Loader } from '@monorepo/web-ui/components/primitives/loader'
+import { Toaster } from '@monorepo/web-ui/components/primitives/sonner'
+import appCss from '@monorepo/web-ui/globals.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import Loader from '@/components/loader'
-import { Toaster } from '@/components/ui/sonner'
-import Header from '../components/header'
-import appCss from '../index.css?url'
 
 export interface RouterAppContext {
   queryClient: QueryClient
