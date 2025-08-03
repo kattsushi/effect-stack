@@ -14,7 +14,8 @@
     "dev:web": "nx dev web",
     "dev:server": "nx dev @monorepo/backend",
     "dev:setup": "nx dev:setup @monorepo/backend",
-    "clean": "rm -rf node_modules dist pnpm-lock.yaml && pnpm store prune & find . -type d \\( -name 'node_modules' -o -name 'dist' -o -name '.output' -o -name '.vinxi' -o -name '.cache' -o -name '.expo' -o -name '.nx' \\) -prune -exec rm -rf {} + & wait"
+    "clean": "rm -rf node_modules dist pnpm-lock.yaml && pnpm store prune & find . -type d \\( -name 'node_modules' -o -name 'dist' -o -name '.output' -o -name '.vinxi' -o -name '.cache' -o -name '.expo' -o -name '.nx' \\) -prune -exec rm -rf {} + & wait",
+    "lint-staged": "lint-staged --allow-empty"
   },
   "dependencies": {},
   "devDependencies": {

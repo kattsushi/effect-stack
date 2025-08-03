@@ -48,7 +48,7 @@
     "tmp": true,
     "**/dist": false,
     "node_modules": true,
-    ".husky": true,
+    ".husky": false,
     "pnpm-lock.yaml": true
   }
 }

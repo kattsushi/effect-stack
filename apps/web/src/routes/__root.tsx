@@ -1,9 +1,9 @@
-import type { QueryClient } from '@tanstack/react-query'
 
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import Loader from '@/components/loader'
 import { Toaster } from '@/components/ui/sonner'
+import type { QueryClient } from '@tanstack/react-query'
 import Header from '../components/header'
 import appCss from '../index.css?url'
 
@@ -13,8 +13,7 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
-    meta: [
-      {
+    meta: [{
         charSet: 'utf-8',
       },
       {
