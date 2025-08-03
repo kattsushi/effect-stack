@@ -3,6 +3,9 @@ packages:
   - packages/*
 
 catalog:
+  # Effect Ecosystem
+  'effect': '3.17.5'
+
   # React ecosystem
   'react': '19.0.0'
   'react-dom': '19.0.0'

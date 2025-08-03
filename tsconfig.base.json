@@ -25,6 +25,7 @@
     "sourceMap": true,
     "incremental": true,
     "isolatedModules": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true
   }
 }

@@ -1,0 +1,16 @@
+{
+  "name": "@effectify/shared-domain",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "effect": "catalog:",
+    "@types/validator": "13.15.2",
+    "validator": "13.15.15"
+  }
+}
