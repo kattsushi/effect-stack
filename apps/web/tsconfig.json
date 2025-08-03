@@ -3,7 +3,7 @@
   "files": [],
   "references": [
     {
-      "path": "../../packages/backend"
+      "path": "../backend"
     },
     {
       "path": "./tsconfig.app.json"
