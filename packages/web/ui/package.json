@@ -1,0 +1,40 @@
+{
+  "name": "@monorepo/web-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./globals.css": "./src/styles/globals.css",
+    "./lib/*": "./src/lib/*.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./blocks/*": "./src/blocks/*.ts",
+    "./components/primitives/*": "./src/components/primitives/*.tsx"
+  },
+  "scripts": {
+    "shadcn": "TS_NODE_PROJECT=tsconfig.lib.json bunx shadcn@latest"
+  },
+  "dependencies": {
+    "@radix-ui/react-label": "2.1.7",
+    "@radix-ui/react-slot": "1.2.3",
+    "@radix-ui/react-form": "0.1.7",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-form": "1.15.2",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "tw-animate-css": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

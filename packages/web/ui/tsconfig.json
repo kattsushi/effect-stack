@@ -1,0 +1,14 @@
+{
+  "extends": ["../../../tsconfig.base.json"],
+  "files": [],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "references": [
+    { "path": "./tsconfig.lib.json" }
+  ]
+}

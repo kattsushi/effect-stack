@@ -1,5 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
   "files": [],
   "references": [
     {
@@ -9,7 +12,7 @@
       "path": "./apps/native"
     },
     {
-      "path": "./packages/backend"
+      "path": "./apps/backend"
     }
   ]
 }
