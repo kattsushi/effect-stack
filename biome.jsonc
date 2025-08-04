@@ -73,6 +73,23 @@
   },
   "overrides": [
     {
+      "includes": ["packages/native/ui/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExportedImports": "off",
+            "noNestedTernary": "off"
+          },
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["apps/native/app/**/*.tsx"],
       "linter": {
         "rules": {
