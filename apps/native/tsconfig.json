@@ -1,9 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "files": [],
+  "compilerOptions": {
+    "noEmit": true
+  },
   "references": [
     {
-      "path": "../../packages/backend"
+      "path": "../backend"
     },
     {
       "path": "./tsconfig.app.json"

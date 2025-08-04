@@ -1,7 +1,7 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "@monorepo/web-ui",
-  "sourceRoot": "packages/react/ui/src",
+  "sourceRoot": "packages/web/ui/src",
   "projectType": "library",
   "tags": ["react", "web"]
 }

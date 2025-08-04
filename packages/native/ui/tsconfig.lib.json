@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "${configDir}/dist",
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@monorepo/native-ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "nativewind-env.d.ts"],
+  "exclude": ["node_modules"]
+}
