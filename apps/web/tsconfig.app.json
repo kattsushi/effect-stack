@@ -19,7 +19,7 @@
   ],
   "references": [
     {
-      "path": "../backend/tsconfig.lib.json"
+      "path": "../backend"
     }
   ]
 }
