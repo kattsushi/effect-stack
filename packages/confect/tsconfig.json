@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ],
+    "importsNotUsedAsValues": "remove",
+    "exactOptionalPropertyTypes": false,
+    "lib": ["ESNext", "DOM"],
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "module": "ESNext"
+  },
+  "exclude": [
+    "coverage",
+    "dist",
+    "docs",
+    "example",
+    "node_modules",
+    "test/convex"
+  ]
+}

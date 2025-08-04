@@ -23,7 +23,8 @@
       "!**/.wrangler",
       "!**/.source",
       "!**/convex/_generated",
-      "!**/tsconfig.json"
+      "!**/tsconfig.json",
+      "!packages/confect/**"
     ]
   },
   "formatter": {
