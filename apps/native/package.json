@@ -8,11 +8,11 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
     "web": "expo start --web",
-    "shadcn": "TS_NODE_PROJECT=tsconfig.ui.json pnpm dlx @react-native-reusables/cli@latest add --overwrite",
-    "shadcn:init": "TS_NODE_PROJECT=tsconfig.ui.json pnpm dlx @react-native-reusables/cli@latest init"
+    "shadcn": "TS_NODE_PROJECT=tsconfig.ui.json pnpm dlx @react-native-reusables/cli@latest add --overwrite"
   },
   "dependencies": {
     "@monorepo/backend": "workspace:*",
+    "@monorepo/native-ui": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
     "@tanstack/react-form": "catalog:",

@@ -1,9 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "files": [],
-  "compilerOptions": {
-    "noEmit": true
-  },
   "references": [
     {
       "path": "../backend"

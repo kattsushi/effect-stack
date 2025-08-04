@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true,
     "outDir": "./out-tsc/lib",
     "target": "ESNext",
     "lib": ["ES2021", "dom"],
