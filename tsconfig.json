@@ -13,6 +13,15 @@
     },
     {
       "path": "./apps/backend"
+    },
+    {
+      "path": "./packages/ui/native"
+    },
+    {
+      "path": "./packages/domain"
+    },
+    {
+      "path": "./packages/ui/web"
     }
   ]
 }

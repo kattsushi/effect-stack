@@ -2,7 +2,7 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "paths": {
-      "@monorepo/native-ui/*": ["./../../packages/native/ui/src/*"]
+      "@monorepo/ui-native/*": ["./../../packages/ui/native/src/*"]
     }
   }
 }

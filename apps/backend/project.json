@@ -1,0 +1,36 @@
+{
+  "name": "@monorepo/backend",
+  "sourceRoot": "apps/backend",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "convex dev",
+        "cwd": "apps/backend"
+      }
+    },
+    "dev:setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "convex dev --configure --until-success",
+        "cwd": "apps/backend"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "convex deploy",
+        "cwd": "apps/backend"
+      }
+    },
+    "check-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/backend"
+      }
+    }
+  },
+  "tags": ["type:backend", "platform:convex"]
+}

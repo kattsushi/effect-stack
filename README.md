@@ -53,8 +53,9 @@ monorepo/
 ├── apps/
 │   ├── web/         # Frontend application (React + TanStack Start)
 │   ├── native/      # Mobile application (React Native, Expo)
-├── packages/
 │   └── backend/     # Convex backend functions and schema
+├── packages/
+│   └── ui/          # Ui libray primitives for web and native
 ```
 
 ## Available Scripts

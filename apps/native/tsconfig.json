@@ -6,6 +6,9 @@
       "path": "../backend"
     },
     {
+      "path": "../../packages/ui/native"
+    },
+    {
       "path": "./tsconfig.app.json"
     }
   ],

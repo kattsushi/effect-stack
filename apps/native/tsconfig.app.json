@@ -19,6 +19,9 @@
   "references": [
     {
       "path": "../backend/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/ui/native"
     }
   ]
 }

@@ -1,5 +1,5 @@
-import { Button } from '@monorepo/native-ui/components/ui/button'
-import { Text } from '@monorepo/native-ui/components/ui/text'
+import { Button } from '@monorepo/ui-native/components/primitives/button'
+import { Text } from '@monorepo/ui-native/components/primitives/text'
 import { ScrollView, View } from 'react-native'
 import { Container } from '@/components/container'
 

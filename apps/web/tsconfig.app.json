@@ -19,7 +19,10 @@
   ],
   "references": [
     {
-      "path": "../backend"
+      "path": "../../packages/ui/web/tsconfig.lib.json"
+    },
+    {
+      "path": "../backend/tsconfig.lib.json"
     }
   ]
 }

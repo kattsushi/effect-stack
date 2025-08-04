@@ -7,7 +7,7 @@
     "dev:watch": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["vite", "nx run @monorepo/web:watch-deps "],
+        "commands": ["pnpm nx dev web", "nx run @monorepo/web:watch-deps "],
         "cwd": "apps/web",
         "parallel": true
       }
@@ -16,9 +16,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx serve @effectify/node-auth-app",
-          "vite",
-          "nx run @monorepo/web:watch-deps "
+          "pnpm nx serve web",
+          "pnpm vite",
+          "pnpm nx run @monorepo/web:watch-deps "
         ],
         "cwd": "apps/web",
         "parallel": true

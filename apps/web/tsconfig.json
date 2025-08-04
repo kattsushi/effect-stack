@@ -6,6 +6,9 @@
   "files": [],
   "references": [
     {
+      "path": "../../packages/ui/web"
+    },
+    {
       "path": "../backend"
     },
     {

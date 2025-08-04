@@ -11,7 +11,7 @@
   "dependencies": {
     "@convex-dev/react-query": "catalog:",
     "@monorepo/backend": "workspace:*",
-    "@monorepo/web-ui": "workspace:*",
+    "@monorepo/ui-web": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",

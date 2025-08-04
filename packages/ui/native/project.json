@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "@monorepo/ui-native",
+  "sourceRoot": "packages/ui/native/src",
+  "projectType": "library",
+  "tags": ["react", "native"]
+}

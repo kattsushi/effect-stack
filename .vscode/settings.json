@@ -30,7 +30,7 @@
   "emmet.showExpandedAbbreviation": "never",
   "editor.codeActionsOnSave": {
     "source.fixAll.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.organizeImports.biome": "always"
   },
   "files.exclude": {
     "**/.git": true,

@@ -73,7 +73,7 @@
   },
   "overrides": [
     {
-      "includes": ["packages/native/ui/**/*.tsx"],
+      "includes": ["!**/dist", "packages/ui/native/**/*.tsx"],
       "linter": {
         "rules": {
           "style": {
