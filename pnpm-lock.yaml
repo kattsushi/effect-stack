@@ -9,6 +9,12 @@ catalogs:
     '@convex-dev/react-query':
       specifier: ^0.0.0-alpha.8
       version: 0.0.0-alpha.11
+    '@effect-rx/rx':
+      specifier: 0.47.10
+      version: 0.47.10
+    '@effect-rx/rx-react':
+      specifier: 0.40.12
+      version: 0.40.12
     '@effect/language-service':
       specifier: 0.34.0
       version: 0.34.0
@@ -179,9 +185,6 @@ importers:
       nx:
         specifier: 21.3.11
         version: 21.3.11(@swc-node/register@1.9.2(@swc/core@1.5.29(@swc/helpers@0.5.17))(@swc/types@0.1.23)(typescript@5.8.3))(@swc/core@1.5.29(@swc/helpers@0.5.17))
-      tailwindcss-animate:
-        specifier: ''
-        version: 1.0.7(tailwindcss@3.4.17)
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
@@ -197,10 +200,22 @@ importers:
 
   apps/backend:
     dependencies:
+      '@effect/platform':
+        specifier: 'catalog:'
+        version: 0.90.0(effect@3.17.5)
+      '@monorepo/confect':
+        specifier: workspace:*
+        version: link:../../packages/confect
       convex:
         specifier: 'catalog:'
         version: 1.25.4(react@19.0.0)
+      effect:
+        specifier: 'catalog:'
+        version: 3.17.5
     devDependencies:
+      '@effect/language-service':
+        specifier: 'catalog:'
+        version: 0.34.0
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
@@ -319,9 +334,18 @@ importers:
       '@convex-dev/react-query':
         specifier: 'catalog:'
         version: 0.0.0-alpha.11(@standard-schema/spec@1.0.0)(@tanstack/react-query@5.84.1(react@19.0.0))(convex@1.25.4(react@19.0.0))(react@19.0.0)(typescript@5.8.3)(zod@3.25.76)
+      '@effect-rx/rx':
+        specifier: 'catalog:'
+        version: 0.47.10(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)
+      '@effect-rx/rx-react':
+        specifier: 'catalog:'
+        version: 0.40.12(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)(react@19.0.0)(scheduler@0.25.0)
       '@monorepo/backend':
         specifier: workspace:*
         version: link:../backend
+      '@monorepo/confect':
+        specifier: workspace:*
+        version: link:../../packages/confect
       '@monorepo/ui-web':
         specifier: workspace:*
         version: link:../../packages/ui/web
@@ -355,6 +379,9 @@ importers:
       convex:
         specifier: 'catalog:'
         version: 1.25.4(react@19.0.0)
+      effect:
+        specifier: 'catalog:'
+        version: 3.17.5
       lucide-react:
         specifier: 'catalog:'
         version: 0.525.0(react@19.0.0)
@@ -1525,6 +1552,19 @@ packages:
   '@dependents/detective-less@5.0.1':
     resolution: {integrity: sha512-Y6+WUMsTFWE5jb20IFP4YGa5IrGY/+a/FbOSjDF/wz9gepU2hwCYSXRHP/vPwBvwcY3SVMASt4yXxbXNXigmZQ==}
     engines: {node: '>=18'}
+
+  '@effect-rx/rx-react@0.40.12':
+    resolution: {integrity: sha512-iQDjwj/eLqx3E7Xv8xpgBUgY6QlK+ufMXbg8es9Ey3s6QEhEPafc20K0+QShKQ4GjZKZ9gp7cTDRwiFQWGe+mQ==}
+    peerDependencies:
+      effect: ^3.17
+      react: '>=18 <20'
+      scheduler: '*'
+
+  '@effect-rx/rx@0.47.10':
+    resolution: {integrity: sha512-uM8DsD3tGXCFLPVusvG3MtP7BbuoV7v73gXo917bu8dqnIasRYDwKhWEMHOCTZI6yvUAKZj1m63M6I/jTRfDOw==}
+    peerDependencies:
+      '@effect/platform': ^0.90.0
+      effect: ^3.17.0
 
   '@effect/cluster@0.46.2':
     resolution: {integrity: sha512-kkAvDzy1OX0pcucIHOxd8JER8EFGmypRQAjZDdxlyvFrZv5IZSHvCL5owKGzu11NiaAc2R0rAWZNPQN8GhIZQA==}
@@ -10553,6 +10593,20 @@ snapshots:
     dependencies:
       gonzales-pe: 4.3.0
       node-source-walk: 7.0.1
+
+  '@effect-rx/rx-react@0.40.12(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)(react@19.0.0)(scheduler@0.25.0)':
+    dependencies:
+      '@effect-rx/rx': 0.47.10(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)
+      effect: 3.17.5
+      react: 19.0.0
+      scheduler: 0.25.0
+    transitivePeerDependencies:
+      - '@effect/platform'
+
+  '@effect-rx/rx@0.47.10(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)':
+    dependencies:
+      '@effect/platform': 0.90.0(effect@3.17.5)
+      effect: 3.17.5
 
   '@effect/cluster@0.46.2(@effect/platform@0.90.0(effect@3.17.5))(@effect/rpc@0.68.2(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5))(@effect/sql@0.44.0(@effect/experimental@0.54.3(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5)(ioredis@5.7.0))(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5))(@effect/workflow@0.8.1(@effect/platform@0.90.0(effect@3.17.5))(@effect/rpc@0.68.2(@effect/platform@0.90.0(effect@3.17.5))(effect@3.17.5))(effect@3.17.5))(effect@3.17.5)':
     dependencies:

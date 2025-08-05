@@ -11,19 +11,25 @@
       "types": "./convex/_generated/dataModel.d.ts",
       "import": "./convex/_generated/dataModel.js",
       "default": "./convex/_generated/dataModel.js"
-    }
+    },
+    "./convex/*": "./convex/*.ts"
   },
   "scripts": {
-    "dev": "convex dev",
-    "dev:setup": "convex dev --configure --until-success"
+    "dev": "pnpm convex dev --tail-logs",
+    "dev:setup": "pnpm convex dev --configure --until-success",
+    "convex-codegen": "pnpm convex codegen"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@effect/language-service": "catalog:"
   },
   "dependencies": {
-    "convex": "catalog:"
+    "@monorepo/confect": "workspace:*",
+    "convex": "catalog:",
+    "effect": "catalog:",
+    "@effect/platform": "catalog:"
   }
 }

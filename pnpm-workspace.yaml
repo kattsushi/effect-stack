@@ -9,6 +9,8 @@ catalog:
   '@effect/platform': '0.90.0'
   '@effect/vitest': '0.25.0'
   '@effect/language-service': '0.34.0'
+  '@effect-rx/rx': '0.47.10'
+  '@effect-rx/rx-react': '0.40.12'
 
   # React ecosystem
   'react': '19.0.0'

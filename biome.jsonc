@@ -57,6 +57,7 @@
         "noParameterAssign": "off"
       },
       "suspicious": {
+        "noShadowRestrictedNames": "off",
         "noConsole": {
           "level": "error",
           "options": {

@@ -1,9 +1,13 @@
-import { defineSchema, defineTable } from 'convex/server'
-import { v } from 'convex/values'
+import { defineConfectSchema, defineConfectTable } from '@monorepo/confect/server'
+import { Schema } from 'effect'
 
-export default defineSchema({
-  todos: defineTable({
-    text: v.string(),
-    completed: v.boolean(),
-  }),
+export const confectSchema = defineConfectSchema({
+  todos: defineConfectTable(
+    Schema.Struct({
+      text: Schema.String.pipe(Schema.maxLength(100)),
+      completed: Schema.optional(Schema.Boolean),
+    }),
+  ),
 })
+
+export default confectSchema.convexSchemaDefinition
