@@ -1,6 +1,7 @@
 import { Rx, useRx } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
+import { useMutation, useQuery } from '@monorepo/confect/react'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
@@ -11,7 +12,6 @@ import * as Effect from 'effect/Effect'
 import * as Option from 'effect/Option'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
-import { useMutation, useQuery } from '../lib/confect-helpers'
 
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,
