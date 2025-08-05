@@ -1,29 +1,34 @@
-import { convexQuery } from '@convex-dev/react-query'
+import { Rx, useRx } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
+import { useMutation, useQuery } from '@monorepo/confect/react'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
 import { Input } from '@monorepo/ui-web/components/primitives/input'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation } from 'convex/react'
+import * as Array from 'effect/Array'
+import * as Effect from 'effect/Effect'
+import * as Option from 'effect/Option'
 import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import type React from 'react'
 
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,
 })
 
+const todoTextRx = Rx.make('')
+
 function TodosRoute() {
-  const [newTodoText, setNewTodoText] = useState('')
+  const [newTodoText, setNewTodoText] = useRx(todoTextRx)
 
-  const todosQuery = useSuspenseQuery(convexQuery(api.todos.getAll, {}))
-  const todos = todosQuery.data
+  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
 
-  const createTodo = useMutation(api.todos.create)
-  const toggleTodo = useMutation(api.todos.toggle)
-  const removeTodo = useMutation(api.todos.deleteTodo)
+  const createTodo = useMutation(api, 'functions', 'insertTodo')
+
+  const toggleTodoMutation = useMutation(api, 'functions', 'toggleTodo')
+
+  const removeTodo = useMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +36,8 @@ function TodosRoute() {
     if (text) {
       setNewTodoText('')
       try {
-        await createTodo({ text })
+        // ✨ Using new simplified API!
+        await createTodo({ text }).pipe(Effect.runPromise)
       } catch (error) {
         console.error('Failed to add todo:', error)
         setNewTodoText(text)
@@ -41,7 +47,8 @@ function TodosRoute() {
 
   const handleToggleTodo = async (id: Id<'todos'>, completed: boolean) => {
     try {
-      await toggleTodo({ id, completed: !completed })
+      // ✨ Using new simplified API!
+      await toggleTodoMutation({ todoId: id, completed: !completed }).pipe(Effect.runPromise)
     } catch (error) {
       console.error('Failed to toggle todo:', error)
     }
@@ -49,7 +56,8 @@ function TodosRoute() {
 
   const handleDeleteTodo = async (id: Id<'todos'>) => {
     try {
-      await removeTodo({ id })
+      // ✨ Using new simplified API!
+      await removeTodo({ todoId: id }).pipe(Effect.runPromise)
     } catch (error) {
       console.error('Failed to delete todo:', error)
     }
@@ -73,37 +81,41 @@ function TodosRoute() {
               Add
             </Button>
           </form>
-          {todos?.length === 0 ? (
-            <p className="py-4 text-center">No todos yet. Add one above!</p>
-          ) : (
-            <ul className="space-y-2">
-              {todos?.map((todo) => (
-                <li className="flex items-center justify-between rounded-md border p-2" key={todo._id}>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={todo.completed}
-                      id={`todo-${todo._id}`}
-                      onCheckedChange={() => handleToggleTodo(todo._id, todo.completed)}
-                    />
-                    <label
-                      className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}
-                      htmlFor={`todo-${todo._id}`}
-                    >
-                      {todo.text}
-                    </label>
-                  </div>
-                  <Button
-                    aria-label="Delete todo"
-                    onClick={() => handleDeleteTodo(todo._id)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+          {Option.match(todosQuery, {
+            onNone: () => <p>Loading...</p>,
+            onSome: (todos) =>
+              Array.isEmptyReadonlyArray(todos) ? (
+                <p>No todos yet. Add one above!</p>
+              ) : (
+                <ul className="space-y-2">
+                  {Array.map(todos, (todo) => (
+                    <li className="flex items-center justify-between rounded-md border p-2" key={todo._id}>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={todo.completed}
+                          id={`todo-${todo._id}`}
+                          onCheckedChange={() => handleToggleTodo(todo._id, todo.completed ?? false)}
+                        />
+                        <label
+                          className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}
+                          htmlFor={`todo-${todo._id}`}
+                        >
+                          {todo.text}
+                        </label>
+                      </div>
+                      <Button
+                        aria-label="Delete todo"
+                        onClick={() => handleDeleteTodo(todo._id)}
+                        size="icon"
+                        variant="ghost"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ),
+          })}
         </CardContent>
       </Card>
     </div>

@@ -1,0 +1,58 @@
+{
+  "name": "@monorepo/confect",
+  "version": "0.0.28",
+  "description": "Use Effect with Convex!",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rjdellecese/confect.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rjdellecese/confect/issues"
+  },
+  "homepage": "https://rj-dellecese.gitbook.io/confect",
+  "sideEffects": false,
+  "type": "module",
+  "files": [
+    "src",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./server": "./src/server/index.ts",
+    "./react": "./src/react/index.ts"
+  },
+  "scripts": {
+    "convex-codegen": "pnpm convex codegen",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "test": "vitest --run --typecheck=false --coverage",
+    "test:watch": "vitest --typecheck=false --coverage"
+  },
+  "keywords": [
+    "effect",
+    "convex"
+  ],
+  "author": "RJ Dellecese",
+  "license": "ISC",
+  "devDependencies": {
+    "@effect/language-service": "catalog:",
+    "@effect/platform-node": "catalog:",
+    "@effect/platform": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@types/node": "24.1.0",
+    "@vitest/coverage-v8": "3.2.4",
+    "convex-test": "0.0.38",
+    "dotenv": "17.2.1",
+    "typescript": "catalog:",
+    "vitest": "3.2.4"
+  },
+  "peerDependencies": {
+    "@effect/platform": "catalog:",
+    "convex": "catalog:",
+    "effect": "catalog:"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  }
+}

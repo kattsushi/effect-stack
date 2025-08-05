@@ -23,7 +23,8 @@
       "!**/.wrangler",
       "!**/.source",
       "!**/convex/_generated",
-      "!**/tsconfig.json"
+      "!**/tsconfig.json",
+      "!packages/confect/**"
     ]
   },
   "formatter": {
@@ -56,6 +57,7 @@
         "noParameterAssign": "off"
       },
       "suspicious": {
+        "noShadowRestrictedNames": "off",
         "noConsole": {
           "level": "error",
           "options": {
