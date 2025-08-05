@@ -3,7 +3,6 @@
   "files": [],
   "compilerOptions": {
     "baseUrl": ".",
-    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
     }
