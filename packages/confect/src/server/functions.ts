@@ -71,8 +71,18 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
       E,
       ConfectDatabaseReader | ConfectAuth | ConfectStorageReader | ConfectQueryRunner | QueryCtx
     >
-  }): RegisteredQuery<'public', ConvexArgs, Promise<ConvexReturns>> =>
-    queryGeneric(confectQueryFunction({ args, returns, handler }))
+  }): RegisteredQuery<'public', ConvexArgs, Promise<ConvexReturns>> => {
+    const queryFunction = queryGeneric(confectQueryFunction({ args, returns, handler }))
+
+    // Add metadata for frontend access without affecting the type
+    ;(queryFunction as any)._confectMeta = {
+      args,
+      returns,
+      type: 'query' as const,
+    }
+
+    return queryFunction
+  }
 
   const confectInternalQuery = <ConvexArgs extends DefaultFunctionArgs, ConfectArgs, ConvexReturns, ConfectReturns, E>({
     args,
@@ -154,8 +164,18 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
       | ConfectMutationRunner
       | MutationCtx
     >
-  }): RegisteredMutation<'public', ConvexValue, Promise<ConvexReturns>> =>
-    mutationGeneric(confectMutationFunction({ args, returns, handler }))
+  }): RegisteredMutation<'public', ConvexValue, Promise<ConvexReturns>> => {
+    const mutationFunction = mutationGeneric(confectMutationFunction({ args, returns, handler }))
+
+    // Add metadata for frontend access without affecting the type
+    ;(mutationFunction as any)._confectMeta = {
+      args,
+      returns,
+      type: 'mutation' as const,
+    }
+
+    return mutationFunction
+  }
 
   const confectInternalMutation = <
     ConvexValue extends DefaultFunctionArgs,
@@ -270,8 +290,18 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
       | ConfectVectorSearch
       | ActionCtx
     >
-  }): RegisteredAction<'public', ConvexValue, Promise<ConvexReturns>> =>
-    actionGeneric(confectActionFunction({ args, returns, handler }))
+  }): RegisteredAction<'public', ConvexValue, Promise<ConvexReturns>> => {
+    const actionFunction = actionGeneric(confectActionFunction({ args, returns, handler }))
+
+    // Add metadata for frontend access without affecting the type
+    ;(actionFunction as any)._confectMeta = {
+      args,
+      returns,
+      type: 'action' as const,
+    }
+
+    return actionFunction
+  }
 
   const confectInternalAction = <
     ConvexValue extends DefaultFunctionArgs,

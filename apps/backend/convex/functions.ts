@@ -1,4 +1,3 @@
-
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 import { ConfectDatabaseReader, ConfectDatabaseWriter, confectAction, confectMutation, confectQuery } from './confect'
@@ -127,10 +126,6 @@ export const CONFECT_FUNCTION_METADATA = {
     type: 'mutation' as const,
   },
 }
-
-// Debug: Let's check if metadata is preserved
-console.log('🔍 Backend - testVerySimple._confectMeta:', (testVerySimple as any)._confectMeta)
-console.log('🔍 Backend - listTodos._confectMeta:', (listTodos as any)._confectMeta)
 
 // Test mutation without complex schemas
 export const testMutation = confectMutation({

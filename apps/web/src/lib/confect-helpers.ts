@@ -1,110 +1,56 @@
-import { api } from '@monorepo/backend/convex/_generated/api'
-import { CONFECT_FUNCTION_METADATA } from '@monorepo/backend/convex/functions'
-import { useQuery as useQueryBase, useMutation as useMutationBase } from '@monorepo/confect/react'
-import * as Option from 'effect/Option'
-import * as Effect from 'effect/Effect'
+/** biome-ignore-all lint/suspicious/noExplicitAny: Dynamic API with type inference */
+import { useMutation as useMutationBase, useQuery as useQueryBase } from '@monorepo/confect/react'
+import type * as Effect from 'effect/Effect'
+import type * as Option from 'effect/Option'
 import * as Schema from 'effect/Schema'
 
-// Type helpers to extract the correct types from metadata
-type ExtractArgsType<T> = T extends Schema.Schema<infer A, any> ? A : never
-type ExtractReturnsType<T> = T extends Schema.Schema<infer R, any> ? R : never
+// Type inference from Convex FunctionReference
+type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
+type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
 
-// Type helpers for dynamic module access
-type ApiModules = typeof api
-type ModuleName = keyof ApiModules
-
-// Type helpers for metadata lookup
-type QueryReturnType<K extends keyof typeof CONFECT_FUNCTION_METADATA> =
-  (args: ExtractArgsType<typeof CONFECT_FUNCTION_METADATA[K]['args']>) =>
-  Option.Option<ExtractReturnsType<typeof CONFECT_FUNCTION_METADATA[K]['returns']>>
-
-type MutationReturnType<K extends keyof typeof CONFECT_FUNCTION_METADATA> =
-  (args: ExtractArgsType<typeof CONFECT_FUNCTION_METADATA[K]['args']>) =>
-  Effect.Effect<ExtractReturnsType<typeof CONFECT_FUNCTION_METADATA[K]['returns']>>
-
-// Enhanced hooks that automatically add metadata with proper types
-
-// New dynamic API: useQuery with module and function name
+// Dynamic API with type inference
 export function useQuery<
-  M extends ModuleName,
-  F extends keyof typeof CONFECT_FUNCTION_METADATA
+  ApiObject extends Record<string, any>,
+  M extends keyof ApiObject,
+  F extends keyof ApiObject[M],
 >(
+  apiObject: ApiObject,
   moduleName: M,
-  functionName: F
-): QueryReturnType<F> {
-  const metadata = CONFECT_FUNCTION_METADATA[functionName]
-  const fn = (api[moduleName] as any)[functionName]
-
-  if (!metadata) {
-    throw new Error(`No metadata found for function: ${String(functionName)}`)
-  }
+  functionName: F,
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<InferFunctionReturns<ApiObject[M][F]>> {
+  const fn = (apiObject[moduleName] as any)[functionName]
 
   if (!fn) {
-    throw new Error(`Function not found in api.${String(moduleName)}: ${String(functionName)}`)
+    throw new Error(`Function not found in ${String(moduleName)}.${String(functionName)}`)
   }
 
-  if (metadata.type !== 'query') {
-    throw new Error(`Function ${String(functionName)} is not a query`)
-  }
-
-  // Use legacy API with metadata from our mapping
+  // Use generic Schema objects that work with any function
   return (useQueryBase as any)({
     query: fn,
-    args: metadata.args,
-    returns: metadata.returns,
-  }) as QueryReturnType<F>
+    args: Schema.Any,
+    returns: Schema.Any,
+  })
 }
 
-// Legacy API: useQuery with just function name (assumes 'functions' module)
-export function useQueryLegacy<K extends keyof typeof CONFECT_FUNCTION_METADATA>(
-  functionName: K
-): QueryReturnType<K> {
-  return useQuery('functions', functionName as any)
-}
-
-// New dynamic API: useMutation with module and function name
 export function useMutation<
-  M extends ModuleName,
-  F extends keyof typeof CONFECT_FUNCTION_METADATA
+  ApiObject extends Record<string, any>,
+  M extends keyof ApiObject,
+  F extends keyof ApiObject[M],
 >(
+  apiObject: ApiObject,
   moduleName: M,
-  functionName: F
-): MutationReturnType<F> {
-  const metadata = CONFECT_FUNCTION_METADATA[functionName]
-  const fn = (api[moduleName] as any)[functionName]
-
-  if (!metadata) {
-    throw new Error(`No metadata found for function: ${String(functionName)}`)
-  }
+  functionName: F,
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>> {
+  const fn = (apiObject[moduleName] as any)[functionName]
 
   if (!fn) {
-    throw new Error(`Function not found in api.${String(moduleName)}: ${String(functionName)}`)
+    throw new Error(`Function not found in ${String(moduleName)}.${String(functionName)}`)
   }
 
-  if (metadata.type !== 'mutation') {
-    throw new Error(`Function ${String(functionName)} is not a mutation`)
-  }
-
-  // Use legacy API with metadata from our mapping
+  // Use generic Schema objects that work with any function
   return (useMutationBase as any)({
     mutation: fn,
-    args: metadata.args,
-    returns: metadata.returns,
-  }) as MutationReturnType<F>
+    args: Schema.Any,
+    returns: Schema.Any,
+  })
 }
-
-// Legacy API: useMutation with just function name (assumes 'functions' module)
-export function useMutationLegacy<K extends keyof typeof CONFECT_FUNCTION_METADATA>(
-  functionName: K
-): MutationReturnType<K> {
-  return useMutation('functions', functionName as any)
-}
-
-// Convenience functions for the common case where module is 'functions'
-export const useQueryFromFunctions = <K extends keyof typeof CONFECT_FUNCTION_METADATA>(
-  functionName: K
-): QueryReturnType<K> => useQuery('functions', functionName as any)
-
-export const useMutationFromFunctions = <K extends keyof typeof CONFECT_FUNCTION_METADATA>(
-  functionName: K
-): MutationReturnType<K> => useMutation('functions', functionName as any)
