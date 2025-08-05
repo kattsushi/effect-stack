@@ -1,16 +1,6 @@
 import { Rx, useRx } from '@effect-rx/rx-react'
-import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import {
-  DeleteTodosArgs,
-  DeleteTodosResult,
-  InsertTodosArgs,
-  InsertTodosResult,
-  ListTodosArgs,
-  ListTodosResult,
-  ToggleTodosArgs,
-} from '@monorepo/backend/convex/functions.schemas'
-import { useMutation, useQuery } from '@monorepo/confect/react'
+import { useMutation, useQuery } from '../lib/confect-helpers'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
@@ -19,9 +9,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import * as Array from 'effect/Array'
 import * as Effect from 'effect/Effect'
 import * as Option from 'effect/Option'
-import * as Schema from 'effect/Schema'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
+
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,
 })
@@ -30,30 +20,14 @@ const todoTextRx = Rx.make('')
 
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useRx(todoTextRx)
+  
+  const todosQuery = useQuery('functions', 'listTodos')({})
 
-  const todosQuery = useQuery({
-    query: api.functions.listTodos,
-    args: ListTodosArgs,
-    returns: ListTodosResult,
-  })({})
+  const createTodo = useMutation('functions', 'insertTodo')
 
-  const createTodo = useMutation({
-    mutation: api.functions.insertTodo,
-    args: InsertTodosArgs,
-    returns: InsertTodosResult,
-  })
+  const toggleTodoMutation = useMutation('functions', 'toggleTodo')
 
-  const toggleTodo = useMutation({
-    mutation: api.functions.toggleTodo,
-    args: ToggleTodosArgs,
-    returns: Schema.Null,
-  })
-
-  const removeTodo = useMutation({
-    mutation: api.functions.deleteTodo,
-    args: DeleteTodosArgs,
-    returns: DeleteTodosResult,
-  })
+  const removeTodo = useMutation('functions', 'deleteTodo')
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,6 +35,7 @@ function TodosRoute() {
     if (text) {
       setNewTodoText('')
       try {
+        // ✨ Using new simplified API!
         await createTodo({ text }).pipe(Effect.runPromise)
       } catch (error) {
         console.error('Failed to add todo:', error)
@@ -70,11 +45,17 @@ function TodosRoute() {
   }
 
   const handleToggleTodo = async (id: Id<'todos'>, completed: boolean) => {
-    await toggleTodo({ todoId: id, completed: !completed }).pipe(Effect.runPromise)
+    try {
+      // ✨ Using new simplified API!
+      await toggleTodoMutation({ todoId: id, completed: !completed }).pipe(Effect.runPromise)
+    } catch (error) {
+      console.error('Failed to toggle todo:', error)
+    }
   }
 
   const handleDeleteTodo = async (id: Id<'todos'>) => {
     try {
+      // ✨ Using new simplified API!
       await removeTodo({ todoId: id }).pipe(Effect.runPromise)
     } catch (error) {
       console.error('Failed to delete todo:', error)
