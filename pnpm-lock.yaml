@@ -228,6 +228,9 @@ importers:
       '@monorepo/backend':
         specifier: workspace:*
         version: link:../backend
+      '@monorepo/confect':
+        specifier: workspace:*
+        version: link:../../packages/confect
       '@monorepo/ui-native':
         specifier: workspace:*
         version: link:../../packages/ui/native

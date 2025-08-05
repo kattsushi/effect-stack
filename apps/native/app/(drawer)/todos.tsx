@@ -1,31 +1,34 @@
+import { Rx, useRx } from '@effect-rx/rx-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useMutation, useQuery } from 'convex/react'
-import { useState } from 'react'
+import { useMutation, useQuery } from '@monorepo/confect/react'
+import * as Effect from 'effect/Effect'
+import * as Option from 'effect/Option'
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
-
 import { Container } from '@/components/container'
 
-export default function TodosScreen() {
-  const [newTodoText, setNewTodoText] = useState('')
+const todoTextRx = Rx.make('')
 
-  const todos = useQuery(api.todos.getAll)
-  const createTodoMutation = useMutation(api.todos.create)
-  const toggleTodoMutation = useMutation(api.todos.toggle)
-  const deleteTodoMutation = useMutation(api.todos.deleteTodo)
+export default function TodosScreen() {
+  const [newTodoText, setNewTodoText] = useRx(todoTextRx)
+
+  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
+  const createTodoMutation = useMutation(api, 'functions', 'insertTodo')
+  const toggleTodoMutation = useMutation(api, 'functions', 'toggleTodo')
+  const deleteTodoMutation = useMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodo = async () => {
     const text = newTodoText.trim()
     if (!text) {
       return
     }
-    await createTodoMutation({ text })
+    await createTodoMutation({ text }).pipe(Effect.runPromise)
     setNewTodoText('')
   }
 
   const handleToggleTodo = (id: Id<'todos'>, currentCompleted: boolean) => {
-    toggleTodoMutation({ id, completed: !currentCompleted })
+    toggleTodoMutation({ todoId: id, completed: !currentCompleted }).pipe(Effect.runPromise)
   }
 
   const handleDeleteTodo = (id: Id<'todos'>) => {
@@ -34,7 +37,7 @@ export default function TodosScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => deleteTodoMutation({ id }),
+        onPress: () => deleteTodoMutation({ todoId: id }).pipe(Effect.runPromise),
       },
     ])
   }
@@ -68,28 +71,24 @@ export default function TodosScreen() {
               </View>
             </View>
 
-            {(() => {
-              if (todos === undefined) {
-                return (
+            <View className="space-y-2">
+              {Option.match(todosQuery, {
+                onNone: () => (
                   <View className="flex justify-center py-8">
                     <ActivityIndicator color="#3b82f6" size="large" />
                   </View>
-                )
-              }
-
-              if (todos.length === 0) {
-                return <Text className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</Text>
-              }
-
-              return (
-                <View className="space-y-2">
-                  {todos.map((todo) => (
+                ),
+                onSome: (todos) =>
+                  todos.map((todo) => (
                     <View
                       className="flex-row items-center justify-between rounded-md border border-border bg-background p-3"
                       key={todo._id}
                     >
                       <View className="flex-1 flex-row items-center">
-                        <TouchableOpacity className="mr-3" onPress={() => handleToggleTodo(todo._id, todo.completed)}>
+                        <TouchableOpacity
+                          className="mr-3"
+                          onPress={() => handleToggleTodo(todo._id, todo.completed ?? false)}
+                        >
                           <Ionicons
                             color={todo.completed ? '#22c55e' : '#6b7280'}
                             name={todo.completed ? 'checkbox' : 'square-outline'}
@@ -108,10 +107,9 @@ export default function TodosScreen() {
                         <Ionicons color="#ef4444" name="trash-outline" size={20} />
                       </TouchableOpacity>
                     </View>
-                  ))}
-                </View>
-              )
-            })()}
+                  )),
+              })}
+            </View>
           </View>
         </View>
       </ScrollView>
