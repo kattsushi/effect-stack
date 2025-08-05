@@ -8,31 +8,29 @@
       "options": {
         "command": "expo start --clear",
         "cwd": "apps/native"
-      }
+      },
+      "dependsOn": ["^build"]
     },
     "android": {
       "executor": "nx:run-commands",
       "options": {
         "command": "expo run:android",
         "cwd": "apps/native"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "ios": {
       "executor": "nx:run-commands",
       "options": {
         "command": "expo run:ios",
         "cwd": "apps/native"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "prebuild": {
       "executor": "nx:run-commands",
       "options": {
         "command": "expo prebuild",
         "cwd": "apps/native"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "web": {
       "executor": "nx:run-commands",

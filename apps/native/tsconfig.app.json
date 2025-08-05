@@ -22,6 +22,9 @@
     },
     {
       "path": "../../packages/ui/native"
+    },
+    {
+      "path": "../../packages/shared/tsconfig.lib.json"
     }
   ]
 }

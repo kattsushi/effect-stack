@@ -1,0 +1,41 @@
+{
+  "name": "@monorepo/shared",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/shared/src",
+  "projectType": "library",
+  "tags": ["shared"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "commands": [
+          "nx run @monorepo/shared:build-cjs",
+          "nx run @monorepo/shared:build-esm"
+        ],
+        "parallel": false
+      }
+    },
+    "build-cjs": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{projectRoot}/dist/cjs"],
+      "options": {
+        "generatePackageJson": false,
+        "outputPath": "packages/shared/dist/cjs",
+        "main": "packages/shared/src/index.ts",
+        "tsConfig": "packages/shared/tsconfig.cjs.json",
+        "assets": ["packages/shared/*.md"]
+      }
+    },
+    "build-esm": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{projectRoot}/dist/esm"],
+      "options": {
+        "generatePackageJson": false,
+        "outputPath": "packages/shared/dist/esm",
+        "main": "packages/shared/src/index.ts",
+        "tsConfig": "packages/shared/tsconfig.esm.json"
+      }
+    }
+  }
+}

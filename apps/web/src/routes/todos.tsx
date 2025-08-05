@@ -2,6 +2,7 @@ import { Rx, useRx } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
 import { useMutation, useQuery } from '@monorepo/confect/react'
+import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
@@ -12,6 +13,7 @@ import * as Effect from 'effect/Effect'
 import * as Option from 'effect/Option'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
+import { rxRuntime } from '@/lib/runtime'
 
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,
@@ -30,38 +32,34 @@ function TodosRoute() {
 
   const removeTodo = useMutation(api, 'functions', 'deleteTodo')
 
-  const handleAddTodo = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const text = newTodoText.trim()
-    if (text) {
-      setNewTodoText('')
-      try {
-        // ✨ Using new simplified API!
-        await createTodo({ text }).pipe(Effect.runPromise)
-      } catch (error) {
-        console.error('Failed to add todo:', error)
-        setNewTodoText(text)
+  const handleAddTodoRx = rxRuntime.fn(
+    Effect.fn(function* (e: React.FormEvent, get: Rx.FnContext) {
+      yield* Effect.sync(() => e.preventDefault())
+      const text = get(todoTextRx).trim()
+      if (text) {
+        get.set(todoTextRx, '')
+        yield* createTodo({ text })
+        yield* Effect.log('Todo added')
       }
-    }
-  }
+    }),
+  )
 
-  const handleToggleTodo = async (id: Id<'todos'>, completed: boolean) => {
-    try {
-      // ✨ Using new simplified API!
-      await toggleTodoMutation({ todoId: id, completed: !completed }).pipe(Effect.runPromise)
-    } catch (error) {
-      console.error('Failed to toggle todo:', error)
-    }
-  }
+  const [addState, setAdd] = useRxPromise(handleAddTodoRx)
 
-  const handleDeleteTodo = async (id: Id<'todos'>) => {
-    try {
-      // ✨ Using new simplified API!
-      await removeTodo({ todoId: id }).pipe(Effect.runPromise)
-    } catch (error) {
-      console.error('Failed to delete todo:', error)
-    }
-  }
+  const handleToggleTodoRx = rxRuntime.fn(
+    Effect.fn(function* ({ id, completed }: { id: Id<'todos'>; completed: boolean }) {
+      return yield* toggleTodoMutation({ todoId: id, completed: !completed })
+    }),
+  )
+
+  const handleToggleTodo = useRxSetPromiseUnwrapped(handleToggleTodoRx)
+
+  const handleDeleteTodoRx = rxRuntime.fn(
+    Effect.fnUntraced(function* (id: Id<'todos'>) {
+      return yield* removeTodo({ todoId: id })
+    }),
+  )
+  const handleDeleteTodo = useRxSetPromiseUnwrapped(handleDeleteTodoRx)
 
   return (
     <div className="mx-auto w-full max-w-md py-10">
@@ -71,13 +69,13 @@ function TodosRoute() {
           <CardDescription>Manage your tasks efficiently</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="mb-6 flex items-center space-x-2" onSubmit={handleAddTodo}>
+          <form className="mb-6 flex items-center space-x-2" onSubmit={setAdd}>
             <Input
               onChange={(e) => setNewTodoText(e.target.value)}
               placeholder="Add a new task..."
               value={newTodoText}
             />
-            <Button disabled={!newTodoText.trim()} type="submit">
+            <Button disabled={!newTodoText.trim() || addState.waiting} type="submit">
               Add
             </Button>
           </form>
@@ -94,7 +92,7 @@ function TodosRoute() {
                         <Checkbox
                           checked={todo.completed}
                           id={`todo-${todo._id}`}
-                          onCheckedChange={() => handleToggleTodo(todo._id, todo.completed ?? false)}
+                          onCheckedChange={() => handleToggleTodo({ id: todo._id, completed: todo.completed ?? false })}
                         />
                         <label
                           className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}

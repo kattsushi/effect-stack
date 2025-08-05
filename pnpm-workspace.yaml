@@ -70,3 +70,4 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - 'esbuild'
   - 'nx'
+  - 'msgpackr-extract'

@@ -1,0 +1,31 @@
+{
+  "name": "@monorepo/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js"
+    },
+    "./rx-utils": {
+      "types": "./dist/src/rx-utils.d.ts",
+      "import": "./dist/esm/src/rx-utils.js",
+      "require": "./dist/cjs/src/rx-utils.js"
+    },
+    "./make-rx-runtime-layer": {
+      "types": "./dist/src/make-rx-runtime-layer.d.ts",
+      "import": "./dist/esm/src/make-rx-runtime-layer.js",
+      "require": "./dist/cjs/src/make-rx-runtime-layer.js"
+    }
+  },
+  "dependencies": {
+    "react": "catalog:",
+    "effect": "catalog:",
+    "@effect-rx/rx": "catalog:",
+    "@effect-rx/rx-react": "catalog:"
+  }
+}

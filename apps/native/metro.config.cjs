@@ -23,6 +23,9 @@ config.resolver.alias = {
   '@': __dirname,
 }
 
+// Configure resolver to handle monorepo packages with dual exports
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main']
+
 module.exports = config
 
 /**

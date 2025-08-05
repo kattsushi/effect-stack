@@ -17,6 +17,7 @@
     "@monorepo/confect": "workspace:*",
     "@monorepo/backend": "workspace:*",
     "@monorepo/ui-native": "workspace:*",
+    "@monorepo/shared": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
     "@tanstack/react-form": "catalog:",

@@ -13,6 +13,7 @@
     "@monorepo/backend": "workspace:*",
     "@monorepo/ui-web": "workspace:*",
     "@monorepo/confect": "workspace:*",
+    "@monorepo/shared": "workspace:*",
     "effect": "catalog:",
     "@effect-rx/rx": "catalog:",
     "@effect-rx/rx-react": "catalog:",
