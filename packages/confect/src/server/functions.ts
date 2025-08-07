@@ -57,22 +57,30 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
   const ActionCtx = ConvexActionCtx<DataModel>()
   type ActionCtx = typeof ActionCtx.Service
 
-  const confectQuery = <ConvexArgs extends DefaultFunctionArgs, ConfectArgs, ConvexReturns, ConfectReturns, E>({
+  const confectQuery = <
+    ConvexArgs extends DefaultFunctionArgs,
+    ConfectArgs,
+    ConvexReturns,
+    ConfectReturns,
+    Errors extends Schema.Schema<any> | undefined = undefined
+  >({
     args,
     returns,
+    errors,
     handler,
   }: {
     args: Schema.Schema<ConfectArgs, ConvexArgs>
     returns: Schema.Schema<ConfectReturns, ConvexReturns>
+    errors?: Errors
     handler: (
       a: ConfectArgs,
     ) => Effect.Effect<
       ConfectReturns,
-      E,
+      Errors extends Schema.Schema<any> ? Schema.Schema.Type<Errors> : never,
       ConfectDatabaseReader | ConfectAuth | ConfectStorageReader | ConfectQueryRunner | QueryCtx
     >
   }): RegisteredQuery<'public', ConvexArgs, Promise<ConvexReturns>> => {
-    const queryFunction = queryGeneric(confectQueryFunction({ args, returns, handler }))
+    const queryFunction = queryGeneric(confectQueryFunction({ args, returns, errors, handler }))
 
     // Add metadata for frontend access without affecting the type
     ;(queryFunction as any)._confectMeta = {
@@ -84,35 +92,51 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
     return queryFunction
   }
 
-  const confectInternalQuery = <ConvexArgs extends DefaultFunctionArgs, ConfectArgs, ConvexReturns, ConfectReturns, E>({
+  const confectInternalQuery = <
+    ConvexArgs extends DefaultFunctionArgs,
+    ConfectArgs,
+    ConvexReturns,
+    ConfectReturns,
+    Errors extends Schema.Schema<any> | undefined = undefined
+  >({
     args,
     handler,
     returns,
+    errors,
   }: {
     args: Schema.Schema<ConfectArgs, ConvexArgs>
     returns: Schema.Schema<ConfectReturns, ConvexReturns>
+    errors?: Errors
     handler: (
       a: ConfectArgs,
     ) => Effect.Effect<
       ConfectReturns,
-      E,
+      Errors extends Schema.Schema<any> ? Schema.Schema.Type<Errors> : never,
       ConfectDatabaseReader | ConfectAuth | ConfectStorageReader | ConfectQueryRunner | QueryCtx
     >
   }): RegisteredQuery<'internal', ConvexArgs, Promise<ConvexReturns>> =>
-    internalQueryGeneric(confectQueryFunction({ args, returns, handler }))
+    internalQueryGeneric(confectQueryFunction({ args, returns, errors, handler }))
 
-  const confectQueryFunction = <ConvexArgs extends DefaultFunctionArgs, ConfectArgs, ConvexReturns, ConfectReturns, E>({
+  const confectQueryFunction = <
+    ConvexArgs extends DefaultFunctionArgs,
+    ConfectArgs,
+    ConvexReturns,
+    ConfectReturns,
+    Errors extends Schema.Schema<any> | undefined = undefined
+  >({
     args,
     returns,
+    errors,
     handler,
   }: {
     args: Schema.Schema<ConfectArgs, ConvexArgs>
     returns: Schema.Schema<ConfectReturns, ConvexReturns>
+    errors?: Errors
     handler: (
       a: ConfectArgs,
     ) => Effect.Effect<
       ConfectReturns,
-      E,
+      Errors extends Schema.Schema<any> ? Schema.Schema.Type<Errors> : never,
       ConfectDatabaseReader | ConfectAuth | ConfectStorageReader | ConfectQueryRunner | QueryCtx
     >
   }) => ({

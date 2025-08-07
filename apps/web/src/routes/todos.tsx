@@ -1,7 +1,9 @@
-import { Rx, useRx } from '@effect-rx/rx-react'
+import { Result } from '@effect-rx/rx'
+import { Rx, useRx, useRxValue } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useMutation, useQuery } from '@monorepo/confect/react'
+import { useMutation } from '@monorepo/confect/react'
+import { useEffectQuery } from '@monorepo/confect/react/effect'
 import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
@@ -10,7 +12,7 @@ import { Input } from '@monorepo/ui-web/components/primitives/input'
 import { createFileRoute } from '@tanstack/react-router'
 import * as Array from 'effect/Array'
 import * as Effect from 'effect/Effect'
-import * as Option from 'effect/Option'
+import { constant } from 'effect/Function'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
 import { rxRuntime } from '@/lib/runtime'
@@ -24,7 +26,10 @@ const todoTextRx = Rx.make('')
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useRx(todoTextRx)
 
-  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
+  const todosQuery = useEffectQuery(api, 'functions', 'listTodos')({})
+
+  const todosQueryRx = rxRuntime.rx(todosQuery)
+  const todos = useRxValue(todosQueryRx)
 
   const createTodo = useMutation(api, 'functions', 'insertTodo')
 
@@ -79,14 +84,14 @@ function TodosRoute() {
               Add
             </Button>
           </form>
-          {Option.match(todosQuery, {
-            onNone: () => <p>Loading...</p>,
-            onSome: (todos) =>
-              Array.isEmptyReadonlyArray(todos) ? (
+          {Result.builder(todos)
+            .onInitial((result) => Result.isInitial(result) && result.waiting && <p>Loading...</p>)
+            .onSuccess((todosData) =>
+              Array.isEmptyReadonlyArray(todosData) ? (
                 <p>No todos yet. Add one above!</p>
               ) : (
                 <ul className="space-y-2">
-                  {Array.map(todos, (todo) => (
+                  {Array.map(todosData, (todo) => (
                     <li className="flex items-center justify-between rounded-md border p-2" key={todo._id}>
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -113,7 +118,10 @@ function TodosRoute() {
                   ))}
                 </ul>
               ),
-          })}
+            )
+            .onDefect(() => <p>Error loading todos</p>)
+            .onFailure(constant('Error loading todos'))
+            .orNull()}
         </CardContent>
       </Card>
     </div>

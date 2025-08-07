@@ -12,22 +12,27 @@
       "import": "./convex/_generated/dataModel.js",
       "default": "./convex/_generated/dataModel.js"
     },
-    "./convex/*": "./convex/*.ts"
+    "./convex/*": "./convex/*.ts",
+    "./confect-types": "./convex/_generated-types/confect-error-types.d.ts"
   },
   "scripts": {
     "dev": "pnpm convex dev --tail-logs",
     "dev:setup": "pnpm convex dev --configure --until-success",
-    "convex-codegen": "pnpm convex codegen"
+    "generate:error-types": "confect-generate",
+    "watch:error-types": "confect-generate --watch"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "typescript": "catalog:",
-    "@effect/language-service": "catalog:"
+    "@effect/language-service": "catalog:",
+    "tsx": "^4.0.0",
+    "chokidar": "^4.0.0"
   },
   "dependencies": {
     "@monorepo/confect": "workspace:*",
+    "@monorepo/shared": "workspace:*",
     "convex": "catalog:",
     "effect": "catalog:",
     "@effect/platform": "catalog:"

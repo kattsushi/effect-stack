@@ -1,3 +1,4 @@
+import { ExampleTaggedError } from '@monorepo/shared'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 import { ConfectDatabaseReader, ConfectDatabaseWriter, confectAction, confectMutation, confectQuery } from './confect'
@@ -15,6 +16,15 @@ import {
   ToggleTodosArgs,
 } from './functions.schemas'
 
+export class NotFoundTaggedError extends Schema.TaggedError<NotFoundTaggedError>('NotFoundTaggedError')(
+  'NotFoundTaggedError',
+  {},
+) {
+  override get message(): string {
+    return 'Not Found'
+  }
+}
+
 export const insertTodo = confectMutation({
   args: InsertTodosArgs,
   returns: InsertTodosResult,
@@ -29,11 +39,27 @@ export const insertTodo = confectMutation({
 export const listTodos = confectQuery({
   args: ListTodosArgs,
   returns: ListTodosResult,
+  errors: Schema.Union(NotFoundTaggedError, ExampleTaggedError),
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
 
-      return yield* reader.table('todos').index('by_creation_time', 'desc').collect()
+      const todos = yield* reader
+        .table('todos')
+        .index('by_creation_time', 'desc')
+        .collect()
+        .pipe(
+          Effect.catchTag(
+            'DocumentDecodeError',
+            () => Effect.fail(new NotFoundTaggedError()), // ✅ Error permited
+          ),
+        )
+
+      if (todos.length > 100) {
+        return yield* Effect.fail(new ExampleTaggedError()) // ✅ Error permited (rate limit)
+      }
+
+      return todos
     }),
 })
 
@@ -69,65 +95,18 @@ export const getRandom = confectAction({
   handler: () => Effect.succeed(Math.random()),
 })
 
-// Simple test function to verify confect functions work
 export const testSimple = confectQuery({
   args: Schema.Struct({}),
   returns: Schema.String,
   handler: () => Effect.succeed('Hello from confect!'),
 })
 
-// Even simpler test without any complex schemas or dependencies
 export const testVerySimple = confectQuery({
   args: Schema.Struct({}),
   returns: Schema.Number,
   handler: () => Effect.succeed(42),
 })
 
-// Export metadata for frontend access
-export const CONFECT_FUNCTION_METADATA = {
-  listTodos: {
-    args: ListTodosArgs,
-    returns: ListTodosResult,
-    type: 'query' as const,
-  },
-  insertTodo: {
-    args: InsertTodosArgs,
-    returns: InsertTodosResult,
-    type: 'mutation' as const,
-  },
-  toggleTodo: {
-    args: ToggleTodosArgs,
-    returns: Schema.Null,
-    type: 'mutation' as const,
-  },
-  deleteTodo: {
-    args: DeleteTodosArgs,
-    returns: DeleteTodosResult,
-    type: 'mutation' as const,
-  },
-  getRandom: {
-    args: GetRandomArgs,
-    returns: GetRandomResult,
-    type: 'action' as const,
-  },
-  getFirst: {
-    args: GetFirstArgs,
-    returns: GetFirstResult,
-    type: 'query' as const,
-  },
-  testVerySimple: {
-    args: Schema.Struct({}),
-    returns: Schema.Number,
-    type: 'query' as const,
-  },
-  testMutation: {
-    args: Schema.Struct({ value: Schema.Number }),
-    returns: Schema.Number,
-    type: 'mutation' as const,
-  },
-}
-
-// Test mutation without complex schemas
 export const testMutation = confectMutation({
   args: Schema.Struct({ value: Schema.Number }),
   returns: Schema.Number,
@@ -137,10 +116,45 @@ export const testMutation = confectMutation({
 export const getFirst = confectQuery({
   args: GetFirstArgs,
   returns: GetFirstResult,
+  errors: NotFoundTaggedError,
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
 
-      return yield* reader.table('todos').index('by_creation_time').first()
+      return yield* reader
+        .table('todos')
+        .index('by_creation_time')
+        .first()
+        .pipe(
+          Effect.catchTag(
+            'DocumentDecodeError',
+            () => Effect.fail(new NotFoundTaggedError()), // ✅ Error permitido
+          ),
+        )
+    }),
+})
+
+import { PermissionTaggedError, RateLimitTaggedError, ValidationTaggedError } from './schemas/errors'
+
+export const testExternalErrors = confectQuery({
+  args: Schema.Struct({ action: Schema.String }),
+  returns: Schema.String,
+  errors: Schema.Union(ValidationTaggedError, PermissionTaggedError, RateLimitTaggedError),
+  handler: ({ action }) =>
+    Effect.gen(function* () {
+      // Ejemplo de uso de errores externos
+      if (action === 'invalid') {
+        return yield* Effect.fail(new ValidationTaggedError({ field: 'action', message: 'Invalid action' }))
+      }
+
+      if (action === 'forbidden') {
+        return yield* Effect.fail(new PermissionTaggedError({ action, resource: 'todos' }))
+      }
+
+      if (action === 'spam') {
+        return yield* Effect.fail(new RateLimitTaggedError({ retryAfter: 60 }))
+      }
+
+      return `Action ${action} executed successfully`
     }),
 })

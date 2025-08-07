@@ -20,7 +20,11 @@
   ],
   "exports": {
     "./server": "./src/server/index.ts",
-    "./react": "./src/react/index.ts"
+    "./react": "./src/react/index.ts",
+    "./react/effect": "./src/react/effect.ts"
+  },
+  "bin": {
+    "confect-generate": "./bin/confect-generate.js"
   },
   "scripts": {
     "convex-codegen": "pnpm convex codegen",
@@ -41,8 +45,10 @@
     "@effect/vitest": "catalog:",
     "@types/node": "24.1.0",
     "@vitest/coverage-v8": "3.2.4",
+    "chokidar": "^4.0.0",
     "convex-test": "0.0.38",
     "dotenv": "17.2.1",
+    "tsx": "^4.0.0",
     "typescript": "catalog:",
     "vitest": "3.2.4"
   },

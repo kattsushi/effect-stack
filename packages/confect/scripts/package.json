@@ -1,0 +1,12 @@
+{
+  "name": "@confect/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "generate": "tsx generate-error-types.ts"
+  }
+}
