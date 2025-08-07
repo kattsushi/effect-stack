@@ -13,7 +13,7 @@
       "default": "./convex/_generated/dataModel.js"
     },
     "./convex/*": "./convex/*.ts",
-    "./confect-types": "./convex/_generated-types/confect-error-types.d.ts"
+    "./confect-types": "./confect-generated-env.d.ts"
   },
   "scripts": {
     "dev": "pnpm convex dev --tail-logs",

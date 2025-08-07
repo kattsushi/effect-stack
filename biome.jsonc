@@ -24,7 +24,8 @@
       "!**/.source",
       "!**/convex/_generated",
       "!**/tsconfig.json",
-      "!packages/confect/**"
+      "!packages/confect/**",
+      "!**/*.d.ts"
     ]
   },
   "formatter": {

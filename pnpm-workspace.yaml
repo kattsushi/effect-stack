@@ -19,9 +19,9 @@ catalog:
   '@types/react-dom': '^19.0.4'
 
   # React Native ecosystem
-  'nativewind': '^4.1.23'
-  'lucide-react-native': '^0.511.0'
-  'react-native-svg': '^15.11.2'
+  'nativewind': '4.1.23'
+  'lucide-react-native': '0.511.0'
+  'react-native-svg': '15.11.2'
 
 
   # TanStack ecosystem

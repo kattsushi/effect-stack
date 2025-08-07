@@ -3,13 +3,16 @@ import {
   useMutation as useConvexMutation,
   useAction as useConvexAction,
 } from 'convex/react'
-import type { FunctionReference } from 'convex/server'
+
 import { Effect } from 'effect'
 
 // Error types will be provided via declaration merging
 export interface ConfectErrorTypes {}
 
-// Type inference from Confect metadata (same strategy as existing API)
+// Return types will be provided via declaration merging
+export interface ConfectReturnTypes {}
+
+// Type inference from Convex API structure (same as in index.ts)
 type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
 type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
 
@@ -18,8 +21,11 @@ type InferFunctionErrors<F extends string> = F extends keyof ConfectErrorTypes
   ? ConfectErrorTypes[F]
   : any
 
-// API object type
-type ApiObject = Record<string, Record<string, FunctionReference<any, any, any, any>>>
+// Hybrid return type inference: prefer Confect types, fallback to Convex API
+type InferFunctionReturnsHybrid<T, F extends string> =
+  F extends keyof ConfectReturnTypes
+    ? ConfectReturnTypes[F]
+    : InferFunctionReturns<T>
 
 // Dynamic API overload (same as useQuery but returning Effect)
 export function useEffectQuery<
@@ -59,8 +65,9 @@ export function useEffectQuery(...args: any[]): any {
   }
 }
 
-// Overloads for useEffectMutation
+// Implementation for mutations
 export function useEffectMutation<
+  ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
   F extends keyof ApiObject[M] & string,
   Fn extends ApiObject[M][F]
@@ -68,17 +75,11 @@ export function useEffectMutation<
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturns<Fn>, InferFunctionErrors<F>, never>
-
-// Implementation for mutations
-export function useEffectMutation(...args: any[]): any {
-  // Extract arguments
-  const [apiObject, moduleName, functionName] = args
+): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
   const fn = apiObject[moduleName][functionName]
-
   const convexMutation = useConvexMutation(fn)
 
-  return (actualArgs: any): Effect.Effect<any, any, never> => {
+  return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
     return Effect.tryPromise({
       try: () => convexMutation(actualArgs),
       catch: (error) => {
@@ -103,8 +104,9 @@ export function useEffectMutation(...args: any[]): any {
   }
 }
 
-// Overloads for useEffectAction
+// Implementation for actions
 export function useEffectAction<
+  ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
   F extends keyof ApiObject[M] & string,
   Fn extends ApiObject[M][F]
@@ -112,17 +114,11 @@ export function useEffectAction<
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturns<Fn>, InferFunctionErrors<F>, never>
-
-// Implementation for actions
-export function useEffectAction(...args: any[]): any {
-  // Extract arguments
-  const [apiObject, moduleName, functionName] = args
+): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
   const fn = apiObject[moduleName][functionName]
-
   const convexAction = useConvexAction(fn)
 
-  return (actualArgs: any): Effect.Effect<any, any, never> => {
+  return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
     return Effect.tryPromise({
       try: () => convexAction(actualArgs),
       catch: (error) => {

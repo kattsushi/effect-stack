@@ -1,11 +1,11 @@
-import { Rx, useRx } from '@effect-rx/rx-react'
+import { Result, Rx, useRx, useRxValue } from '@effect-rx/rx-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useMutation, useQuery } from '@monorepo/confect/react'
+import { useEffectAction, useEffectMutation, useEffectQuery } from '@monorepo/confect/react/effect'
 import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import * as Effect from 'effect/Effect'
-import * as Option from 'effect/Option'
+
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { Container } from '@/components/container'
 import { rxRuntime } from '@/lib/runtime'
@@ -15,10 +15,13 @@ const todoTextRx = Rx.make('')
 export default function TodosScreen() {
   const [newTodoText, setNewTodoText] = useRx(todoTextRx)
 
-  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
-  const createTodoMutation = useMutation(api, 'functions', 'insertTodo')
-  const toggleTodoMutation = useMutation(api, 'functions', 'toggleTodo')
-  const deleteTodoMutation = useMutation(api, 'functions', 'deleteTodo')
+  const todosQuery = useEffectQuery(api, 'functions', 'listTodos')({})
+  const todosQueryRx = rxRuntime.rx(todosQuery)
+  const todos = useRxValue(todosQueryRx)
+
+  const createTodoMutation = useEffectMutation(api, 'functions', 'insertTodo')
+  const toggleTodoMutation = useEffectAction(api, 'functions', 'toggleTodo')
+  const deleteTodoMutation = useEffectMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodoRx = rxRuntime.fn(
     Effect.fn(function* (_: undefined, get: Rx.FnContext) {
@@ -37,8 +40,8 @@ export default function TodosScreen() {
   const handleSubmitEditing = () => setAdd(undefined)
 
   const handleToggleTodoRx = rxRuntime.fn(
-    Effect.fn(function* ({ id, completed }: { id: Id<'todos'>; completed: boolean }) {
-      return yield* toggleTodoMutation({ todoId: id, completed: !completed })
+    Effect.fn(function* (id: Id<'todos'>) {
+      return yield* toggleTodoMutation({ todoId: id })
     }),
   )
 
@@ -93,23 +96,24 @@ export default function TodosScreen() {
             </View>
 
             <View className="space-y-2">
-              {Option.match(todosQuery, {
-                onNone: () => (
-                  <View className="flex justify-center py-8">
-                    <ActivityIndicator color="#3b82f6" size="large" />
-                  </View>
-                ),
-                onSome: (todos) =>
-                  todos.map((todo) => (
+              {Result.builder(todos)
+                .onInitial(
+                  (result) =>
+                    Result.isInitial(result) &&
+                    result.waiting && (
+                      <View className="flex justify-center py-8">
+                        <ActivityIndicator color="#3b82f6" size="large" />
+                      </View>
+                    ),
+                )
+                .onSuccess((todosData) =>
+                  todosData.map((todo) => (
                     <View
                       className="flex-row items-center justify-between rounded-md border border-border bg-background p-3"
                       key={todo._id}
                     >
                       <View className="flex-1 flex-row items-center">
-                        <TouchableOpacity
-                          className="mr-3"
-                          onPress={() => handleToggleTodo({ id: todo._id, completed: todo.completed ?? false })}
-                        >
+                        <TouchableOpacity className="mr-3" onPress={() => handleToggleTodo(todo._id)}>
                           <Ionicons
                             color={todo.completed ? '#22c55e' : '#6b7280'}
                             name={todo.completed ? 'checkbox' : 'square-outline'}
@@ -129,7 +133,8 @@ export default function TodosScreen() {
                       </TouchableOpacity>
                     </View>
                   )),
-              })}
+                )
+                .orNull()}
             </View>
           </View>
         </View>

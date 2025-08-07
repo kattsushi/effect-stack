@@ -1,10 +1,18 @@
 import { ExampleTaggedError } from '@monorepo/shared'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
-import { ConfectDatabaseReader, ConfectDatabaseWriter, confectAction, confectMutation, confectQuery } from './confect'
+import { internal } from './_generated/api'
+import {
+  ConfectDatabaseReader,
+  ConfectDatabaseWriter,
+  ConfectMutationRunner,
+  confectAction,
+  confectInternalMutation,
+  confectMutation,
+  confectQuery,
+} from './confect'
 import {
   DeleteTodosArgs,
-  DeleteTodosResult,
   GetFirstArgs,
   GetFirstResult,
   GetRandomArgs,
@@ -28,11 +36,14 @@ export class NotFoundTaggedError extends Schema.TaggedError<NotFoundTaggedError>
 export const insertTodo = confectMutation({
   args: InsertTodosArgs,
   returns: InsertTodosResult,
+  errors: ExampleTaggedError,
   handler: ({ text }) =>
     Effect.gen(function* () {
       const writer = yield* ConfectDatabaseWriter
 
-      return yield* writer.insert('todos', { text })
+      return yield* writer
+        .insert('todos', { text })
+        .pipe(Effect.catchTag('DocumentEncodeError', () => Effect.fail(new ExampleTaggedError())))
     }),
 })
 
@@ -65,34 +76,90 @@ export const listTodos = confectQuery({
 
 export const deleteTodo = confectMutation({
   args: DeleteTodosArgs,
-  returns: DeleteTodosResult,
+  returns: Schema.Void,
+  errors: NotFoundTaggedError,
   handler: ({ todoId }) =>
     Effect.gen(function* () {
+      const reader = yield* ConfectDatabaseReader
       const writer = yield* ConfectDatabaseWriter
 
-      yield* writer.delete('todos', todoId)
+      // Check if todo exists before deleting
+      yield* reader
+        .table('todos')
+        .get(todoId)
+        .pipe(
+          Effect.catchTags({
+            GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
+            DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+          }),
+        )
 
-      return null
+      yield* writer.delete('todos', todoId)
     }),
 })
 
-export const toggleTodo = confectMutation({
+// Internal mutation to handle the database operations
+export const toggleTodoMutation = confectInternalMutation({
   args: ToggleTodosArgs,
-  returns: Schema.Null,
-  handler: ({ todoId, completed }) =>
+  returns: Schema.Void,
+  errors: NotFoundTaggedError,
+  handler: ({ todoId }) =>
     Effect.gen(function* () {
+      const reader = yield* ConfectDatabaseReader
       const writer = yield* ConfectDatabaseWriter
 
-      yield* writer.patch('todos', todoId, { completed })
+      // Get current todo to check its completed status
+      const todo = yield* reader
+        .table('todos')
+        .get(todoId)
+        .pipe(
+          Effect.catchTags({
+            GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
+            DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+          }),
+        )
 
-      return null
+      // Toggle the completed status
+      const newCompletedStatus = !todo.completed
+
+      yield* writer.patch('todos', todoId, { completed: newCompletedStatus }).pipe(
+        Effect.catchTags({
+          GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
+          DocumentEncodeError: () => Effect.fail(new NotFoundTaggedError()),
+          DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+        }),
+      )
+    }),
+})
+
+export const toggleTodo = confectAction({
+  args: ToggleTodosArgs,
+  returns: Schema.Void,
+  errors: NotFoundTaggedError,
+  handler: ({ todoId }): Effect.Effect<void, NotFoundTaggedError, ConfectMutationRunner> =>
+    Effect.gen(function* () {
+      const mutationRunner = yield* ConfectMutationRunner
+
+      // Use mutation runner to call the internal mutation
+      yield* mutationRunner(internal.functions.toggleTodoMutation, { todoId })
     }),
 })
 
 export const getRandom = confectAction({
   args: GetRandomArgs,
   returns: GetRandomResult,
-  handler: () => Effect.succeed(Math.random()),
+  errors: ExampleTaggedError,
+  handler: () =>
+    Effect.gen(function* () {
+      const randomValue = Math.random()
+
+      // Simulate an error condition for demonstration
+      if (randomValue < 0.1) {
+        return yield* Effect.fail(new ExampleTaggedError())
+      }
+
+      return randomValue
+    }),
 })
 
 export const testSimple = confectQuery({

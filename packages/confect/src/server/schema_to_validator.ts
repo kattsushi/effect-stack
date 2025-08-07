@@ -317,11 +317,11 @@ export const compileAst = (
         ),
         Match.tag('Refinement', ({ from }) => compileAst(from)),
         Match.tag('Suspend', () => Effect.succeed(v.any())),
+        Match.tag('VoidKeyword', () => Effect.succeed(v.null())),
         Match.tag(
           'UniqueSymbol',
           'SymbolKeyword',
           'UndefinedKeyword',
-          'VoidKeyword',
           'NeverKeyword',
           'Enums',
           'TemplateLiteral',

@@ -21,6 +21,7 @@ export {
 export { compileSchema } from './schema_to_validator'
 export { GenericId } from './schemas/GenericId'
 export { PaginationResult } from './schemas/PaginationResult'
+export { extendWithSystemFields } from './schemas/SystemFields'
 export {
   ConfectStorageActionWriter,
   ConfectStorageReader,

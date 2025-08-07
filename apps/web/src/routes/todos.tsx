@@ -2,8 +2,7 @@ import { Result } from '@effect-rx/rx'
 import { Rx, useRx, useRxValue } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useMutation } from '@monorepo/confect/react'
-import { useEffectQuery } from '@monorepo/confect/react/effect'
+import { useEffectAction, useEffectMutation, useEffectQuery } from '@monorepo/confect/react/effect'
 import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
@@ -31,11 +30,11 @@ function TodosRoute() {
   const todosQueryRx = rxRuntime.rx(todosQuery)
   const todos = useRxValue(todosQueryRx)
 
-  const createTodo = useMutation(api, 'functions', 'insertTodo')
+  const createTodo = useEffectMutation(api, 'functions', 'insertTodo')
 
-  const toggleTodoMutation = useMutation(api, 'functions', 'toggleTodo')
+  const toggleAction = useEffectAction(api, 'functions', 'toggleTodo')
 
-  const removeTodo = useMutation(api, 'functions', 'deleteTodo')
+  const removeTodo = useEffectMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodoRx = rxRuntime.fn(
     Effect.fn(function* (e: React.FormEvent, get: Rx.FnContext) {
@@ -52,8 +51,8 @@ function TodosRoute() {
   const [addState, setAdd] = useRxPromise(handleAddTodoRx)
 
   const handleToggleTodoRx = rxRuntime.fn(
-    Effect.fn(function* ({ id, completed }: { id: Id<'todos'>; completed: boolean }) {
-      return yield* toggleTodoMutation({ todoId: id, completed: !completed })
+    Effect.fn(function* (id: Id<'todos'>) {
+      return yield* toggleAction({ todoId: id })
     }),
   )
 
@@ -97,7 +96,7 @@ function TodosRoute() {
                         <Checkbox
                           checked={todo.completed}
                           id={`todo-${todo._id}`}
-                          onCheckedChange={() => handleToggleTodo({ id: todo._id, completed: todo.completed ?? false })}
+                          onCheckedChange={() => handleToggleTodo(todo._id)}
                         />
                         <label
                           className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}

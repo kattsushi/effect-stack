@@ -1,13 +1,8 @@
 import { defineConfectSchema, defineConfectTable } from '@monorepo/confect/server'
-import { Schema } from 'effect'
+import { Todo } from './functions.schemas'
 
 export const confectSchema = defineConfectSchema({
-  todos: defineConfectTable(
-    Schema.Struct({
-      text: Schema.String.pipe(Schema.maxLength(100)),
-      completed: Schema.optional(Schema.Boolean),
-    }),
-  ),
+  todos: defineConfectTable(Todo),
 })
 
 export default confectSchema.convexSchemaDefinition

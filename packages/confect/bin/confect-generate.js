@@ -16,7 +16,7 @@ async function main() {
 
   // Parse arguments
   let convexDir = './convex'
-  let outputPath = './convex/_generated-types/confect-error-types.d.ts'
+  let outputPath = './confect-generated-env.d.ts'
   let watch = false
 
   for (let i = 0; i < args.length; i++) {
@@ -88,7 +88,7 @@ async function watchAndGenerate(convexDir, outputPath) {
   ], {
     ignored: [
       '**/node_modules/**',
-      '**/_generated/confect-error-types.d.ts', // Ignore our generated file
+      '**/confect-generated-env.d.ts', // Ignore our generated file
       '**/*.js',
       '**/*.map'
     ],
@@ -137,7 +137,7 @@ Usage:
 
 Options:
   --convex-dir <path>    Convex functions directory (default: ./convex)
-  --output <path>        Output file (default: ./convex/_generated-types/confect-error-types.d.ts)
+  --output <path>        Output file (default: ./confect-generated-env.d.ts)
   --watch               Watch mode - automatically regenerate on changes
   --help                Show this help
 
