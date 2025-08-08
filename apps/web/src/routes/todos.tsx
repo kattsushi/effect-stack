@@ -2,7 +2,7 @@ import { Result } from '@effect-rx/rx'
 import { Rx, useRx, useRxValue } from '@effect-rx/rx-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useEffectAction, useEffectMutation, useEffectQuery } from '@monorepo/confect/react/effect'
+import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
 import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
@@ -25,16 +25,16 @@ const todoTextRx = Rx.make('')
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useRx(todoTextRx)
 
-  const todosQuery = useEffectQuery(api, 'functions', 'listTodos')({})
+  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
 
   const todosQueryRx = rxRuntime.rx(todosQuery)
   const todos = useRxValue(todosQueryRx)
 
-  const createTodo = useEffectMutation(api, 'functions', 'insertTodo')
+  const createTodo = useMutation(api, 'functions', 'insertTodo')
 
-  const toggleAction = useEffectAction(api, 'functions', 'toggleTodo')
+  const toggleAction = useAction(api, 'functions', 'toggleTodo')
 
-  const removeTodo = useEffectMutation(api, 'functions', 'deleteTodo')
+  const removeTodo = useMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodoRx = rxRuntime.fn(
     Effect.fn(function* (e: React.FormEvent, get: Rx.FnContext) {

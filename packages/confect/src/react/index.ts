@@ -1,181 +1,140 @@
 import {
-  useAction as useConvexAction,
-  useMutation as useConvexMutation,
   useQuery as useConvexQuery,
+  useMutation as useConvexMutation,
+  useAction as useConvexAction,
 } from 'convex/react'
-import type { FunctionReference } from 'convex/server'
-import { Effect, Option, Schema } from 'effect'
 
-// Type inference from Convex FunctionReference for dynamic API
+import { Effect } from 'effect'
+
+// Error types will be provided via declaration merging
+export interface ConfectErrorTypes {}
+
+// Return types will be provided via declaration merging
+export interface ConfectReturnTypes {}
+
+// Type inference from Convex API structure (same as in index.ts)
 type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
 type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
 
-// Legacy API overload (original)
-export function useQuery<Query extends FunctionReference<'query'>, Args, Returns>(config: {
-  query: Query
-  args: Schema.Schema<Args, Query['_args']>
-  returns: Schema.Schema<Returns, Query['_returnType']>
-}): (actualArgs: Args) => Option.Option<Returns>
+// Extract error types from ConfectErrorTypes interface (declaration merging)
+type InferFunctionErrors<F extends string> = F extends keyof ConfectErrorTypes
+  ? ConfectErrorTypes[F]
+  : any
 
-// Dynamic API overload (new)
+type InferFunctionReturnsHybrid<T, _F> = InferFunctionReturns<T>
+
+// Dynamic API overload (same as useQuery but returning Effect)
 export function useQuery<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
-  F extends keyof ApiObject[M],
+  F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<InferFunctionReturns<ApiObject[M][F]>>
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>, never>
 
-// Implementation that handles both APIs
-export function useQuery(...args: any[]): any {
-  // Check if it's the legacy API (single config object)
-  if (args.length === 1 && args[0] && typeof args[0] === 'object' && 'query' in args[0]) {
-    const { query, args: argsSchema, returns } = args[0]
+// Implementation that handles the API (same strategy as useQuery)
+export function useQuery(...args: any[]) {
+  // Extract arguments
+  const [apiObject, moduleName, functionName] = args
+  const fn = apiObject[moduleName][functionName]
 
-    return (actualArgs: any): Option.Option<any> => {
-      const encodedArgs = Schema.encodeSync(argsSchema)(actualArgs)
-      const actualReturnsOrUndefined = useConvexQuery(query, encodedArgs)
+  return (actualArgs: any) => {
+    // Use the existing Convex hook to get result
+    const convexResult = useConvexQuery(fn, actualArgs)
 
-      if (actualReturnsOrUndefined === undefined) {
-        return Option.none()
-      }
-      const decodedReturns = Schema.decodeSync(returns)(actualReturnsOrUndefined)
-      return Option.some(decodedReturns)
+    // Transform result to Effect
+    if (convexResult === undefined) {
+      // Still loading - return never-resolving effect
+      return Effect.never
     }
+
+    // Check if the result is an error (Convex error format)
+    if (convexResult && typeof convexResult === 'object' && '__convexError' in convexResult) {
+      // Extract and return the error to the error channel
+      return Effect.fail((convexResult as any).__convexError)
+    }
+
+    // Success case - return as-is to preserve types
+    return Effect.succeed(convexResult)
   }
-
-  // Dynamic API (new)
-  if (args.length === 3) {
-    const [apiObject, moduleName, functionName] = args
-    const fn = (apiObject[moduleName] as any)[functionName]
-
-    if (!fn) {
-      throw new Error(`Function not found in ${String(moduleName)}.${String(functionName)}`)
-    }
-
-    return (actualArgs: any): Option.Option<any> => {
-      const encodedArgs = Schema.encodeSync(Schema.Any)(actualArgs)
-      const actualReturnsOrUndefined = useConvexQuery(fn, encodedArgs)
-
-      if (actualReturnsOrUndefined === undefined) {
-        return Option.none()
-      }
-      const decodedReturns = Schema.decodeSync(Schema.Any)(actualReturnsOrUndefined)
-      return Option.some(decodedReturns)
-    }
-  }
-
-  throw new Error('Invalid arguments for useQuery. Use either legacy API or dynamic API.')
 }
 
-// Legacy API overload (original)
-export function useMutation<Mutation extends FunctionReference<'mutation'>, Args, Returns>(config: {
-  mutation: Mutation
-  args: Schema.Schema<Args, Mutation['_args']>
-  returns: Schema.Schema<Returns, Mutation['_returnType']>
-}): (actualArgs: Args) => Effect.Effect<Returns>
-
-// Dynamic API overload (new)
+// Implementation for mutations
 export function useMutation<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
-  F extends keyof ApiObject[M],
+  F extends keyof ApiObject[M] & string,
+  Fn extends ApiObject[M][F]
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>>
+): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
+  const fn = apiObject[moduleName][functionName]
+  const convexMutation = useConvexMutation(fn)
 
-// Implementation that handles both APIs
-export function useMutation(...args: any[]): any {
-  // Check if it's the legacy API (single config object)
-  if (args.length === 1 && args[0] && typeof args[0] === 'object' && 'mutation' in args[0]) {
-    const { mutation, args: argsSchema, returns } = args[0]
-    const actualMutation = useConvexMutation(mutation)
-
-    return (actualArgs: any): Effect.Effect<any> =>
-      Effect.gen(function* () {
-        const encodedArgs = yield* Schema.encode(argsSchema)(actualArgs)
-        const actualReturns = yield* Effect.promise(() => actualMutation(encodedArgs))
-        return yield* Schema.decode(returns)(actualReturns)
-      }).pipe(Effect.orDie) as any
+  return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
+    return Effect.tryPromise({
+      try: () => convexMutation(actualArgs),
+      catch: (error) => {
+        // Handle ConvexError and extract typed data
+        if (error && typeof error === 'object' && 'message' in error) {
+          const message = (error as any).message
+          if (message && message.includes('ConvexError:')) {
+            try {
+              // Extract JSON from error message
+              const jsonMatch = message.match(/ConvexError: ({.*})/)
+              if (jsonMatch) {
+                return JSON.parse(jsonMatch[1])
+              }
+            } catch (e) {
+              // Fallback to original error
+            }
+          }
+        }
+        return error
+      }
+    })
   }
-
-  // Dynamic API (new)
-  if (args.length === 3) {
-    const [apiObject, moduleName, functionName] = args
-    const fn = (apiObject[moduleName] as any)[functionName]
-
-    if (!fn) {
-      throw new Error(`Function not found in ${String(moduleName)}.${String(functionName)}`)
-    }
-
-    const actualMutation = useConvexMutation(fn)
-
-    return (actualArgs: any): Effect.Effect<any> =>
-      Effect.gen(function* () {
-        const encodedArgs = yield* Schema.encode(Schema.Any)(actualArgs)
-        const actualReturns = yield* Effect.promise(() => actualMutation(encodedArgs))
-        return yield* Schema.decode(Schema.Any)(actualReturns)
-      }).pipe(Effect.orDie)
-  }
-
-  throw new Error('Invalid arguments for useMutation. Use either legacy API or dynamic API.')
 }
 
-// Legacy API overload (original)
-export function useAction<Action extends FunctionReference<'action'>, Args, Returns>(config: {
-  action: Action
-  args: Schema.Schema<Args, Action['_args']>
-  returns: Schema.Schema<Returns, Action['_returnType']>
-}): (actualArgs: Args) => Effect.Effect<Returns>
-
-// Dynamic API overload (new)
+// Implementation for actions
 export function useAction<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
-  F extends keyof ApiObject[M],
+  F extends keyof ApiObject[M] & string,
+  Fn extends ApiObject[M][F]
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>>
+): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
+  const fn = apiObject[moduleName][functionName]
+  const convexAction = useConvexAction(fn)
 
-// Implementation that handles both APIs
-export function useAction(...args: any[]): any {
-  // Check if it's the legacy API (single config object)
-  if (args.length === 1 && args[0] && typeof args[0] === 'object' && 'action' in args[0]) {
-    const { action, args: argsSchema, returns } = args[0]
-    const actualAction = useConvexAction(action)
-
-    return (actualArgs: any): Effect.Effect<any> =>
-      Effect.gen(function* () {
-        const encodedArgs = yield* Schema.encode(argsSchema)(actualArgs)
-        const actualReturns = yield* Effect.promise(() => actualAction(encodedArgs))
-        return yield* Schema.decode(returns)(actualReturns)
-      }).pipe(Effect.orDie) as any
+  return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
+    return Effect.tryPromise({
+      try: () => convexAction(actualArgs),
+      catch: (error) => {
+        // Handle ConvexError and extract typed data
+        if (error && typeof error === 'object' && 'message' in error) {
+          const message = (error as any).message
+          if (message && message.includes('ConvexError:')) {
+            try {
+              // Extract JSON from error message
+              const jsonMatch = message.match(/ConvexError: ({.*})/)
+              if (jsonMatch) {
+                return JSON.parse(jsonMatch[1])
+              }
+            } catch (e) {
+              // Fallback to original error
+            }
+          }
+        }
+        return error
+      }
+    })
   }
-
-  // Dynamic API (new)
-  if (args.length === 3) {
-    const [apiObject, moduleName, functionName] = args
-    const fn = (apiObject[moduleName] as any)[functionName]
-
-    if (!fn) {
-      throw new Error(`Function not found in ${String(moduleName)}.${String(functionName)}`)
-    }
-
-    const actualAction = useConvexAction(fn)
-
-    return (actualArgs: any): Effect.Effect<any> =>
-      Effect.gen(function* () {
-        const encodedArgs = yield* Schema.encode(Schema.Any)(actualArgs)
-        const actualReturns = yield* Effect.promise(() => actualAction(encodedArgs))
-        return yield* Schema.decode(Schema.Any)(actualReturns)
-      }).pipe(Effect.orDie) as any
-  }
-
-  throw new Error('Invalid arguments for useAction. Use either legacy API or dynamic API.')
 }

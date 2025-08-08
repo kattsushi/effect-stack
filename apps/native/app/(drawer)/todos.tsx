@@ -2,7 +2,7 @@ import { Result, Rx, useRx, useRxValue } from '@effect-rx/rx-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useEffectAction, useEffectMutation, useEffectQuery } from '@monorepo/confect/react/effect'
+import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
 import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
 import * as Effect from 'effect/Effect'
 
@@ -15,13 +15,13 @@ const todoTextRx = Rx.make('')
 export default function TodosScreen() {
   const [newTodoText, setNewTodoText] = useRx(todoTextRx)
 
-  const todosQuery = useEffectQuery(api, 'functions', 'listTodos')({})
+  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
   const todosQueryRx = rxRuntime.rx(todosQuery)
   const todos = useRxValue(todosQueryRx)
 
-  const createTodoMutation = useEffectMutation(api, 'functions', 'insertTodo')
-  const toggleTodoMutation = useEffectAction(api, 'functions', 'toggleTodo')
-  const deleteTodoMutation = useEffectMutation(api, 'functions', 'deleteTodo')
+  const createTodoMutation = useMutation(api, 'functions', 'insertTodo')
+  const toggleTodoMutation = useAction(api, 'functions', 'toggleTodo')
+  const deleteTodoMutation = useMutation(api, 'functions', 'deleteTodo')
 
   const handleAddTodoRx = rxRuntime.fn(
     Effect.fn(function* (_: undefined, get: Rx.FnContext) {
