@@ -3,33 +3,15 @@
 // This file should be committed to version control for other developers and CI/CD
 // This file is automatically loaded when you import @monorepo/confect/react/effect
 
-import type { ExampleTaggedError } from '@monorepo/shared'
-import type { Todo } from './convex/schema'
-import type { NotFoundTaggedError } from './convex/functions.js'
-import type { PermissionTaggedError, RateLimitTaggedError, ValidationTaggedError } from './convex/schemas/errors.js'
+import type { NotFoundError } from './convex/functions.js'
 
 declare module '@monorepo/confect/react/effect' {
   interface ConfectErrorTypes {
-    insertTodo: ExampleTaggedError
-    listTodos: NotFoundTaggedError | ExampleTaggedError
-    deleteTodo: NotFoundTaggedError
-    toggleTodo: NotFoundTaggedError
-    getRandom: ExampleTaggedError
-    getFirst: NotFoundTaggedError
-    testExternalErrors: ValidationTaggedError | PermissionTaggedError | RateLimitTaggedError
-  }
-
-  interface ConfectReturnTypes {
-    insertTodo: Id<'todos'>
-    listTodos: TodoWithSystemFields[]
-    deleteTodo: void
-    toggleTodo: void
-    getRandom: number
-    testSimple: string
-    testVerySimple: number
-    testMutation: number
-    getFirst: Option<Todo>
-    testExternalErrors: string
+    insertTodo: NotFoundError
+    listTodos: NotFoundError
+    deleteTodo: NotFoundError
+    toggleTodo: NotFoundError
+    getFirst: NotFoundError
   }
 }
 
@@ -37,13 +19,11 @@ declare module '@monorepo/confect/react/effect' {
 export {}
 
 // Helper types for individual functions
-export type InsertTodoErrors = ExampleTaggedError
-export type ListTodosErrors = NotFoundTaggedError | ExampleTaggedError
-export type DeleteTodoErrors = NotFoundTaggedError
-export type ToggleTodoErrors = NotFoundTaggedError
-export type GetRandomErrors = ExampleTaggedError
-export type GetFirstErrors = NotFoundTaggedError
-export type TestExternalErrorsErrors = ValidationTaggedError | PermissionTaggedError | RateLimitTaggedError
+export type InsertTodoErrors = NotFoundError
+export type ListTodosErrors = NotFoundError
+export type DeleteTodoErrors = NotFoundError
+export type ToggleTodoErrors = NotFoundError
+export type GetFirstErrors = NotFoundError
 
 // Auto-load this module when @monorepo/confect/react/effect is imported
 declare global {

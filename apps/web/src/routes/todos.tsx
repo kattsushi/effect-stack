@@ -52,7 +52,7 @@ function TodosRoute() {
 
   const handleToggleTodoRx = rxRuntime.fn(
     Effect.fn(function* (id: Id<'todos'>) {
-      return yield* toggleAction({ todoId: id })
+      return yield* toggleAction({ id })
     }),
   )
 
@@ -60,7 +60,7 @@ function TodosRoute() {
 
   const handleDeleteTodoRx = rxRuntime.fn(
     Effect.fnUntraced(function* (id: Id<'todos'>) {
-      return yield* removeTodo({ todoId: id })
+      return yield* removeTodo({ id })
     }),
   )
   const handleDeleteTodo = useRxSetPromiseUnwrapped(handleDeleteTodoRx)

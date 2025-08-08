@@ -41,7 +41,7 @@ export default function TodosScreen() {
 
   const handleToggleTodoRx = rxRuntime.fn(
     Effect.fn(function* (id: Id<'todos'>) {
-      return yield* toggleTodoMutation({ todoId: id })
+      return yield* toggleTodoMutation({ id })
     }),
   )
 
@@ -49,7 +49,7 @@ export default function TodosScreen() {
 
   const handleDeleteTodoRx = rxRuntime.fn(
     Effect.fnUntraced(function* (id: Id<'todos'>) {
-      return yield* deleteTodoMutation({ todoId: id })
+      return yield* deleteTodoMutation({ id })
     }),
   )
 

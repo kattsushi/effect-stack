@@ -21,30 +21,26 @@ type InferFunctionErrors<F extends string> = F extends keyof ConfectErrorTypes
   ? ConfectErrorTypes[F]
   : any
 
-// Hybrid return type inference: prefer Confect types, fallback to Convex API
-type InferFunctionReturnsHybrid<T, F extends string> =
-  F extends keyof ConfectReturnTypes
-    ? ConfectReturnTypes[F]
-    : InferFunctionReturns<T>
+type InferFunctionReturnsHybrid<T, _F> = InferFunctionReturns<T>
 
 // Dynamic API overload (same as useQuery but returning Effect)
 export function useEffectQuery<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
-  F extends keyof ApiObject[M],
+  F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F & string>, never>
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>, never>
 
 // Implementation that handles the API (same strategy as useQuery)
-export function useEffectQuery(...args: any[]): any {
+export function useEffectQuery(...args: any[]) {
   // Extract arguments
   const [apiObject, moduleName, functionName] = args
   const fn = apiObject[moduleName][functionName]
 
-  return (actualArgs: any): Effect.Effect<any, any, never> => {
+  return (actualArgs: any) => {
     // Use the existing Convex hook to get result
     const convexResult = useConvexQuery(fn, actualArgs)
 

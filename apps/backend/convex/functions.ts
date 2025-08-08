@@ -1,4 +1,3 @@
-import { ExampleTaggedError } from '@monorepo/shared'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 import { internal } from './_generated/api'
@@ -11,46 +10,32 @@ import {
   confectMutation,
   confectQuery,
 } from './confect'
-import {
-  DeleteTodosArgs,
-  GetFirstArgs,
-  GetFirstResult,
-  GetRandomArgs,
-  GetRandomResult,
-  InsertTodosArgs,
-  InsertTodosResult,
-  ListTodosArgs,
-  ListTodosResult,
-  ToggleTodosArgs,
-} from './functions.schemas'
+import { TodoWithSystemFields } from './functions.schemas'
 
-export class NotFoundTaggedError extends Schema.TaggedError<NotFoundTaggedError>('NotFoundTaggedError')(
-  'NotFoundTaggedError',
-  {},
-) {
+export class NotFoundError extends Schema.TaggedError<NotFoundError>('NotFoundError')('NotFoundError', {}) {
   override get message(): string {
     return 'Not Found'
   }
 }
 
 export const insertTodo = confectMutation({
-  args: InsertTodosArgs,
-  returns: InsertTodosResult,
-  errors: ExampleTaggedError,
+  args: TodoWithSystemFields.InsertArgs,
+  returns: TodoWithSystemFields.fields._id,
+  errors: NotFoundError,
   handler: ({ text }) =>
     Effect.gen(function* () {
       const writer = yield* ConfectDatabaseWriter
 
       return yield* writer
-        .insert('todos', { text })
-        .pipe(Effect.catchTag('DocumentEncodeError', () => Effect.fail(new ExampleTaggedError())))
+        .insert('todos', { text, _tag: 'Todo' as const })
+        .pipe(Effect.catchTag('DocumentEncodeError', () => Effect.fail(new NotFoundError())))
     }),
 })
 
 export const listTodos = confectQuery({
-  args: ListTodosArgs,
-  returns: ListTodosResult,
-  errors: Schema.Union(NotFoundTaggedError, ExampleTaggedError),
+  args: Schema.Struct({}),
+  returns: TodoWithSystemFields.Array,
+  errors: NotFoundError,
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
@@ -62,12 +47,12 @@ export const listTodos = confectQuery({
         .pipe(
           Effect.catchTag(
             'DocumentDecodeError',
-            () => Effect.fail(new NotFoundTaggedError()), // ✅ Error permited
+            () => Effect.fail(new NotFoundError()), // ✅ Error permited
           ),
         )
 
-      if (todos.length > 100) {
-        return yield* Effect.fail(new ExampleTaggedError()) // ✅ Error permited (rate limit)
+      if (todos.length === 0) {
+        return yield* Effect.fail(new NotFoundError()) // ✅ Error permited (rate limit)
       }
 
       return todos
@@ -75,10 +60,10 @@ export const listTodos = confectQuery({
 })
 
 export const deleteTodo = confectMutation({
-  args: DeleteTodosArgs,
+  args: TodoWithSystemFields.FindByIdArgs,
   returns: Schema.Void,
-  errors: NotFoundTaggedError,
-  handler: ({ todoId }) =>
+  errors: NotFoundError,
+  handler: ({ id }) =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
       const writer = yield* ConfectDatabaseWriter
@@ -86,24 +71,24 @@ export const deleteTodo = confectMutation({
       // Check if todo exists before deleting
       yield* reader
         .table('todos')
-        .get(todoId)
+        .get(id)
         .pipe(
           Effect.catchTags({
-            GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
-            DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+            GetByIdFailure: () => Effect.fail(new NotFoundError()),
+            DocumentDecodeError: () => Effect.fail(new NotFoundError()),
           }),
         )
 
-      yield* writer.delete('todos', todoId)
+      yield* writer.delete('todos', id)
     }),
 })
 
 // Internal mutation to handle the database operations
 export const toggleTodoMutation = confectInternalMutation({
-  args: ToggleTodosArgs,
+  args: TodoWithSystemFields.FindByIdArgs,
   returns: Schema.Void,
-  errors: NotFoundTaggedError,
-  handler: ({ todoId }) =>
+  errors: NotFoundError,
+  handler: ({ id }) =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
       const writer = yield* ConfectDatabaseWriter
@@ -111,79 +96,44 @@ export const toggleTodoMutation = confectInternalMutation({
       // Get current todo to check its completed status
       const todo = yield* reader
         .table('todos')
-        .get(todoId)
+        .get(id)
         .pipe(
           Effect.catchTags({
-            GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
-            DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+            GetByIdFailure: () => Effect.fail(new NotFoundError()),
+            DocumentDecodeError: () => Effect.fail(new NotFoundError()),
           }),
         )
 
       // Toggle the completed status
       const newCompletedStatus = !todo.completed
 
-      yield* writer.patch('todos', todoId, { completed: newCompletedStatus }).pipe(
+      yield* writer.patch('todos', id, { completed: newCompletedStatus }).pipe(
         Effect.catchTags({
-          GetByIdFailure: () => Effect.fail(new NotFoundTaggedError()),
-          DocumentEncodeError: () => Effect.fail(new NotFoundTaggedError()),
-          DocumentDecodeError: () => Effect.fail(new NotFoundTaggedError()),
+          GetByIdFailure: () => Effect.fail(new NotFoundError()),
+          DocumentEncodeError: () => Effect.fail(new NotFoundError()),
+          DocumentDecodeError: () => Effect.fail(new NotFoundError()),
         }),
       )
     }),
 })
 
 export const toggleTodo = confectAction({
-  args: ToggleTodosArgs,
+  args: TodoWithSystemFields.FindByIdArgs,
   returns: Schema.Void,
-  errors: NotFoundTaggedError,
-  handler: ({ todoId }): Effect.Effect<void, NotFoundTaggedError, ConfectMutationRunner> =>
+  errors: NotFoundError,
+  handler: ({ id }): Effect.Effect<void, NotFoundError, ConfectMutationRunner> =>
     Effect.gen(function* () {
       const mutationRunner = yield* ConfectMutationRunner
 
       // Use mutation runner to call the internal mutation
-      yield* mutationRunner(internal.functions.toggleTodoMutation, { todoId })
+      yield* mutationRunner(internal.functions.toggleTodoMutation, { id })
     }),
-})
-
-export const getRandom = confectAction({
-  args: GetRandomArgs,
-  returns: GetRandomResult,
-  errors: ExampleTaggedError,
-  handler: () =>
-    Effect.gen(function* () {
-      const randomValue = Math.random()
-
-      // Simulate an error condition for demonstration
-      if (randomValue < 0.1) {
-        return yield* Effect.fail(new ExampleTaggedError())
-      }
-
-      return randomValue
-    }),
-})
-
-export const testSimple = confectQuery({
-  args: Schema.Struct({}),
-  returns: Schema.String,
-  handler: () => Effect.succeed('Hello from confect!'),
-})
-
-export const testVerySimple = confectQuery({
-  args: Schema.Struct({}),
-  returns: Schema.Number,
-  handler: () => Effect.succeed(42),
-})
-
-export const testMutation = confectMutation({
-  args: Schema.Struct({ value: Schema.Number }),
-  returns: Schema.Number,
-  handler: ({ value }) => Effect.succeed(value * 2),
 })
 
 export const getFirst = confectQuery({
-  args: GetFirstArgs,
-  returns: GetFirstResult,
-  errors: NotFoundTaggedError,
+  args: Schema.Struct({}),
+  returns: TodoWithSystemFields.Option,
+  errors: NotFoundError,
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
@@ -195,33 +145,8 @@ export const getFirst = confectQuery({
         .pipe(
           Effect.catchTag(
             'DocumentDecodeError',
-            () => Effect.fail(new NotFoundTaggedError()), // ✅ Error permitido
+            () => Effect.fail(new NotFoundError()), // ✅ Error permitido
           ),
         )
-    }),
-})
-
-import { PermissionTaggedError, RateLimitTaggedError, ValidationTaggedError } from './schemas/errors'
-
-export const testExternalErrors = confectQuery({
-  args: Schema.Struct({ action: Schema.String }),
-  returns: Schema.String,
-  errors: Schema.Union(ValidationTaggedError, PermissionTaggedError, RateLimitTaggedError),
-  handler: ({ action }) =>
-    Effect.gen(function* () {
-      // Ejemplo de uso de errores externos
-      if (action === 'invalid') {
-        return yield* Effect.fail(new ValidationTaggedError({ field: 'action', message: 'Invalid action' }))
-      }
-
-      if (action === 'forbidden') {
-        return yield* Effect.fail(new PermissionTaggedError({ action, resource: 'todos' }))
-      }
-
-      if (action === 'spam') {
-        return yield* Effect.fail(new RateLimitTaggedError({ retryAfter: 60 }))
-      }
-
-      return `Action ${action} executed successfully`
     }),
 })

@@ -20,6 +20,24 @@ export const extendWithSystemFields = <TableName extends string, TableSchema ext
 ): ExtendWithSystemFields<TableName, TableSchema> => Schema.extend(SystemFields(tableName), schema)
 
 /**
+ * Helper to create system fields for a table
+ */
+export const systemFields = <TableName extends string>(tableName: TableName) => ({
+  _id: GenericId(tableName),
+  _creationTime: Schema.Number,
+} as const)
+
+/**
+ * Macro to help create TaggedClass with system fields.
+ * Usage:
+ * const baseFields = { text: Schema.String, completed: Schema.optional(Schema.Boolean) }
+ * export class Todo extends Schema.TaggedClass<Todo>()('Todo', baseFields) {}
+ * export class TodoWithSystemFields extends Schema.TaggedClass<TodoWithSystemFields>()('Todo', { ...baseFields, ...systemFields('todos') }) {}
+ */
+export const withSystemFieldsMacro = <TableName extends string>(tableName: TableName) =>
+  systemFields(tableName)
+
+/**
  * Extend a table schema with Convex system fields at the type level.
  */
 export type ExtendWithSystemFields<
