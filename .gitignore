@@ -16,3 +16,5 @@ vitest.config.*.timestamp*
 dist/
 **/dist/
 *.tsbuildinfo
+coverage/
+**/coverage/

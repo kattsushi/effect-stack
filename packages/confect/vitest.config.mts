@@ -13,7 +13,14 @@ export default defineConfig({
         functions: 100,
         lines: 100,
       },
-      exclude: [...(configDefaults.coverage?.exclude ?? []), 'example/**/*', 'src/**/index.ts', 'tsdown.config.ts'],
+      exclude: [
+        ...(configDefaults.coverage?.exclude ?? []),
+        'example/**/*',
+        'src/**/index.ts',
+        'tsdown.config.ts',
+        'bin/**/*',
+        'scripts/**/*'
+      ],
     },
     typecheck: {
       include: ['**/*.{test,spec}{-d,}.?(c|m)[jt]s?(x)'],

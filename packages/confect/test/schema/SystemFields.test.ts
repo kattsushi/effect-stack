@@ -2,7 +2,7 @@ import type { Expand } from 'convex/server'
 import { Schema } from 'effect'
 import { describe, expect, expectTypeOf, test } from 'vitest'
 import { GenericId } from '../../src/server/schemas/GenericId'
-import { extendWithSystemFields } from '../../src/server/schemas/SystemFields'
+import { extendWithSystemFields, systemFields, withSystemFieldsMacro } from '../../src/server/schemas/SystemFields'
 
 describe(extendWithSystemFields, () => {
   test('extends a struct with system fields', () => {
@@ -87,5 +87,52 @@ describe(extendWithSystemFields, () => {
 
     expectTypeOf<Expand<Actual['Encoded']>>().toEqualTypeOf<Expected['Encoded']>()
     expectTypeOf<Expand<Actual['Type']>>().toEqualTypeOf<Expected['Type']>()
+  })
+})
+
+describe(systemFields, () => {
+  test('creates system fields object for a table', () => {
+    const fields = systemFields('users')
+
+    expect(fields).toHaveProperty('_id')
+    expect(fields).toHaveProperty('_creationTime')
+
+    // Test that the fields work correctly by creating a schema with them
+    const testSchema = Schema.Struct(fields)
+    const testData = {
+      _id: 'user123' as GenericId<'users'>,
+      _creationTime: 1234567890
+    }
+
+    expect(() => Schema.decodeUnknownSync(testSchema)(testData)).not.toThrow()
+  })
+})
+
+describe(withSystemFieldsMacro, () => {
+  test('returns system fields for use in TaggedClass', () => {
+    const fields = withSystemFieldsMacro('todos')
+
+    expect(fields).toHaveProperty('_id')
+    expect(fields).toHaveProperty('_creationTime')
+
+    // Test that it can be used in object spread
+    const baseFields = { text: Schema.String, completed: Schema.optional(Schema.Boolean) }
+    const allFields = { ...baseFields, ...fields }
+
+    expect(allFields).toHaveProperty('text')
+    expect(allFields).toHaveProperty('completed')
+    expect(allFields).toHaveProperty('_id')
+    expect(allFields).toHaveProperty('_creationTime')
+
+    // Test that the combined fields work in a schema
+    const testSchema = Schema.Struct(allFields)
+    const testData = {
+      text: 'Test todo',
+      completed: true,
+      _id: 'todo123' as GenericId<'todos'>,
+      _creationTime: 1234567890
+    }
+
+    expect(() => Schema.decodeUnknownSync(testSchema)(testData)).not.toThrow()
   })
 })

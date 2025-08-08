@@ -350,8 +350,8 @@ const handleUnion = ({ types: [first, second, ...rest] }: SchemaAST.Union, isOpt
     /* v8 ignore start */
     if (firstValidator === undefined) {
       return yield* Effect.dieMessage('First validator of union is undefined; this should be impossible.')
-      /* v8 ignore stop */
     }
+    /* v8 ignore stop */
     if (secondValidator === undefined) {
       return firstValidator
     }
