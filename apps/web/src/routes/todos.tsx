@@ -1,9 +1,9 @@
-import { Result } from '@effect-rx/rx'
-import { Rx, useRx, useRxValue } from '@effect-rx/rx-react'
+import { Result } from '@effect-atom/atom'
+import { Atom, useAtom, useAtomValue } from '@effect-atom/atom-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
 import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
-import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
+import { useAtomPromise, useAtomSetPromiseUnwrapped } from '@monorepo/shared/atom-utils'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
@@ -14,21 +14,21 @@ import * as Effect from 'effect/Effect'
 import { constant } from 'effect/Function'
 import { Trash2 } from 'lucide-react'
 import type React from 'react'
-import { rxRuntime } from '@/lib/runtime'
+import { atomRuntime } from '@/lib/runtime'
 
 export const Route = createFileRoute('/todos')({
   component: TodosRoute,
 })
 
-const todoTextRx = Rx.make('')
+const todoTextAtom = Atom.make('')
 
 function TodosRoute() {
-  const [newTodoText, setNewTodoText] = useRx(todoTextRx)
+  const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
   const todosQuery = useQuery(api, 'functions', 'listTodos')({})
 
-  const todosQueryRx = rxRuntime.rx(todosQuery)
-  const todos = useRxValue(todosQueryRx)
+  const todosQueryAtom = atomRuntime.atom(todosQuery)
+  const todos = useAtomValue(todosQueryAtom)
 
   const createTodo = useMutation(api, 'functions', 'insertTodo')
 
@@ -36,34 +36,34 @@ function TodosRoute() {
 
   const removeTodo = useMutation(api, 'functions', 'deleteTodo')
 
-  const handleAddTodoRx = rxRuntime.fn(
-    Effect.fn(function* (e: React.FormEvent, get: Rx.FnContext) {
+  const handleAddTodoAtom = atomRuntime.fn(
+    Effect.fn(function* (e: React.FormEvent, get: Atom.FnContext) {
       yield* Effect.sync(() => e.preventDefault())
-      const text = get(todoTextRx).trim()
+      const text = get(todoTextAtom).trim()
       if (text) {
-        get.set(todoTextRx, '')
+        get.set(todoTextAtom, '')
         yield* createTodo({ text })
         yield* Effect.log('Todo added')
       }
     }),
   )
 
-  const [addState, setAdd] = useRxPromise(handleAddTodoRx)
+  const [addState, setAdd] = useAtomPromise(handleAddTodoAtom)
 
-  const handleToggleTodoRx = rxRuntime.fn(
+  const handleToggleTodoAtom = atomRuntime.fn(
     Effect.fn(function* (id: Id<'todos'>) {
       return yield* toggleAction({ id })
     }),
   )
 
-  const handleToggleTodo = useRxSetPromiseUnwrapped(handleToggleTodoRx)
+  const handleToggleTodo = useAtomSetPromiseUnwrapped(handleToggleTodoAtom)
 
-  const handleDeleteTodoRx = rxRuntime.fn(
+  const handleDeleteTodoAtom = atomRuntime.fn(
     Effect.fnUntraced(function* (id: Id<'todos'>) {
       return yield* removeTodo({ id })
     }),
   )
-  const handleDeleteTodo = useRxSetPromiseUnwrapped(handleDeleteTodoRx)
+  const handleDeleteTodo = useAtomSetPromiseUnwrapped(handleDeleteTodoAtom)
 
   return (
     <div className="mx-auto w-full max-w-md py-10">

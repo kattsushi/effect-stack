@@ -1,59 +1,59 @@
-import { Result, Rx, useRx, useRxValue } from '@effect-rx/rx-react'
+import { Atom, Result, useAtom, useAtomValue } from '@effect-atom/atom-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
 import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
-import { useRxPromise, useRxSetPromiseUnwrapped } from '@monorepo/shared/rx-utils'
+import { useAtomPromise, useAtomSetPromiseUnwrapped } from '@monorepo/shared/atom-utils'
 import * as Effect from 'effect/Effect'
 
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { Container } from '@/components/container'
-import { rxRuntime } from '@/lib/runtime'
+import { atomRuntime } from '@/lib/runtime'
 
-const todoTextRx = Rx.make('')
+const todoTextAtom = Atom.make('')
 
 export default function TodosScreen() {
-  const [newTodoText, setNewTodoText] = useRx(todoTextRx)
+  const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
   const todosQuery = useQuery(api, 'functions', 'listTodos')({})
-  const todosQueryRx = rxRuntime.rx(todosQuery)
-  const todos = useRxValue(todosQueryRx)
+  const todosQueryAtom = atomRuntime.atom(todosQuery)
+  const todos = useAtomValue(todosQueryAtom)
 
   const createTodoMutation = useMutation(api, 'functions', 'insertTodo')
   const toggleTodoMutation = useAction(api, 'functions', 'toggleTodo')
   const deleteTodoMutation = useMutation(api, 'functions', 'deleteTodo')
 
-  const handleAddTodoRx = rxRuntime.fn(
-    Effect.fn(function* (_: undefined, get: Rx.FnContext) {
-      const text = get(todoTextRx).trim()
+  const handleAddTodoAtom = atomRuntime.fn(
+    Effect.fn(function* (_: undefined, get: Atom.FnContext) {
+      const text = get(todoTextAtom).trim()
       if (text) {
-        get.set(todoTextRx, '')
+        get.set(todoTextAtom, '')
         yield* createTodoMutation({ text })
         yield* Effect.log('Todo added')
       }
     }),
   )
 
-  const [addState, setAdd] = useRxPromise(handleAddTodoRx)
+  const [addState, setAdd] = useAtomPromise(handleAddTodoAtom)
 
   const handleAddTodo = () => setAdd(undefined)
   const handleSubmitEditing = () => setAdd(undefined)
 
-  const handleToggleTodoRx = rxRuntime.fn(
+  const handleToggleTodoAtom = atomRuntime.fn(
     Effect.fn(function* (id: Id<'todos'>) {
       return yield* toggleTodoMutation({ id })
     }),
   )
 
-  const handleToggleTodo = useRxSetPromiseUnwrapped(handleToggleTodoRx)
+  const handleToggleTodo = useAtomSetPromiseUnwrapped(handleToggleTodoAtom)
 
-  const handleDeleteTodoRx = rxRuntime.fn(
+  const handleDeleteTodoAtom = atomRuntime.fn(
     Effect.fnUntraced(function* (id: Id<'todos'>) {
       return yield* deleteTodoMutation({ id })
     }),
   )
 
-  const handleDeleteTodo = useRxSetPromiseUnwrapped(handleDeleteTodoRx)
+  const handleDeleteTodo = useAtomSetPromiseUnwrapped(handleDeleteTodoAtom)
 
   const handleDeleteTodoWithAlert = (id: Id<'todos'>) => {
     Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [

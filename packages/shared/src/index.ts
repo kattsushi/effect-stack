@@ -1,3 +1,3 @@
+export * from './atom-utils'
 export * from './errors'
-export * from './make-rx-runtime-layer'
-export * from './rx-utils'
+export * from './make-atom-runtime-layer'

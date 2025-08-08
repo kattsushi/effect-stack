@@ -1,4 +1,4 @@
-import { makeRxRuntimeLayer } from '@monorepo/shared/make-rx-runtime-layer'
+import { makeAtomRuntimeLayer } from '@monorepo/shared/make-atom-runtime-layer'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Logger from 'effect/Logger'
@@ -9,4 +9,4 @@ const MainLayer = Logger.pretty.pipe(
   Layer.tapErrorCause(Effect.logError),
 )
 
-export const { runtime, makeRxRuntime, rxRuntime } = makeRxRuntimeLayer(MainLayer)
+export const { runtime, makeAtomRuntime, atomRuntime } = makeAtomRuntimeLayer(MainLayer)

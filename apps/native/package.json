@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "effect": "catalog:",
-    "@effect-rx/rx": "catalog:",
-    "@effect-rx/rx-react": "catalog:",
+    "@effect-atom/atom": "catalog:",
+    "@effect-atom/atom-react": "catalog:",
     "@monorepo/confect": "workspace:*",
     "@monorepo/backend": "workspace:*",
     "@monorepo/ui-native": "workspace:*",
