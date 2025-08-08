@@ -3,7 +3,7 @@ import type { HttpApiDecodeError } from '@effect/platform/HttpApiError'
 import { Effect, Layer, Option, Schema } from 'effect'
 import { api } from '../_generated/api'
 import { ConfectQueryRunner } from '../confect.ts'
-import { GetFirstResult } from '../functions.schemas.ts'
+import { TodoSchema } from '../functions.schemas.ts'
 import { confectSchema } from '../schema'
 
 class ApiGroup extends HttpApiGroup.make('notes')
@@ -42,7 +42,7 @@ const ApiGroupLive = HttpApiBuilder.group(Api, 'notes', (handlers) =>
         const runQuery = yield* ConfectQueryRunner
 
         const firstNote = yield* runQuery(api.functions.getFirst, {}).pipe(
-          Effect.andThen(Schema.decode(GetFirstResult)),
+          Effect.andThen(Schema.decode(TodoSchema.Option)),
           Effect.map(Option.getOrNull),
           Effect.orDie,
         )

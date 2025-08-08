@@ -10,7 +10,7 @@ import {
   confectMutation,
   confectQuery,
 } from './confect'
-import { TodoWithSystemFields } from './functions.schemas'
+import { TodoSchema } from './functions.schemas'
 
 export class NotFoundError extends Schema.TaggedError<NotFoundError>('NotFoundError')('NotFoundError', {}) {
   override get message(): string {
@@ -19,48 +19,42 @@ export class NotFoundError extends Schema.TaggedError<NotFoundError>('NotFoundEr
 }
 
 export const insertTodo = confectMutation({
-  args: TodoWithSystemFields.InsertArgs,
-  returns: TodoWithSystemFields.fields._id,
+  args: TodoSchema.InsertArgs,
+  returns: Schema.String, // Return the ID as string
   errors: NotFoundError,
   handler: ({ text }) =>
     Effect.gen(function* () {
       const writer = yield* ConfectDatabaseWriter
 
       return yield* writer
-        .insert('todos', { text, _tag: 'Todo' as const })
+        .insert('todos', { text, tag: 'Todo' as const })
         .pipe(Effect.catchTag('DocumentEncodeError', () => Effect.fail(new NotFoundError())))
     }),
 })
 
 export const listTodos = confectQuery({
   args: Schema.Struct({}),
-  returns: TodoWithSystemFields.Array,
+  returns: TodoSchema.Array,
   errors: NotFoundError,
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
 
-      const todos = yield* reader
+      return yield* reader
         .table('todos')
         .index('by_creation_time', 'desc')
         .collect()
         .pipe(
           Effect.catchTag(
             'DocumentDecodeError',
-            () => Effect.fail(new NotFoundError()), // ✅ Error permited
+            () => Effect.succeed([]), // Return empty array on decode error
           ),
         )
-
-      if (todos.length === 0) {
-        return yield* Effect.fail(new NotFoundError()) // ✅ Error permited (rate limit)
-      }
-
-      return todos
     }),
 })
 
 export const deleteTodo = confectMutation({
-  args: TodoWithSystemFields.FindByIdArgs,
+  args: TodoSchema.FindByIdArgs,
   returns: Schema.Void,
   errors: NotFoundError,
   handler: ({ id }) =>
@@ -85,7 +79,7 @@ export const deleteTodo = confectMutation({
 
 // Internal mutation to handle the database operations
 export const toggleTodoMutation = confectInternalMutation({
-  args: TodoWithSystemFields.FindByIdArgs,
+  args: TodoSchema.FindByIdArgs,
   returns: Schema.Void,
   errors: NotFoundError,
   handler: ({ id }) =>
@@ -118,7 +112,7 @@ export const toggleTodoMutation = confectInternalMutation({
 })
 
 export const toggleTodo = confectAction({
-  args: TodoWithSystemFields.FindByIdArgs,
+  args: TodoSchema.FindByIdArgs,
   returns: Schema.Void,
   errors: NotFoundError,
   handler: ({ id }): Effect.Effect<void, NotFoundError, ConfectMutationRunner> =>
@@ -132,7 +126,7 @@ export const toggleTodo = confectAction({
 
 export const getFirst = confectQuery({
   args: Schema.Struct({}),
-  returns: TodoWithSystemFields.Option,
+  returns: TodoSchema.Option,
   errors: NotFoundError,
   handler: () =>
     Effect.gen(function* () {

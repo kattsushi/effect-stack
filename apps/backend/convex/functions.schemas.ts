@@ -1,24 +1,35 @@
 import { systemFields } from '@monorepo/confect/server'
 import * as Schema from 'effect/Schema'
-export class Todo extends Schema.TaggedClass<Todo>()('Todo', {
+
+// Base schema for confect table definition (Struct that can be extended)
+export const Todo = Schema.Struct({
+  tag: Schema.Literal('Todo'),
   text: Schema.String.pipe(Schema.maxLength(100)),
   completed: Schema.optional(Schema.Boolean),
-}) {}
+})
+// Todo namespace with all related schemas and helpers
+export namespace TodoSchema {
+  // Schema class for todos with system fields
+  export class WithSystemFields extends Schema.Class<WithSystemFields>('Todo')({
+    ...systemFields('todos'),
+    ...Todo.fields,
+  }) {}
 
-export class TodoWithSystemFields extends Schema.TaggedClass<TodoWithSystemFields>()('Todo', {
-  ...systemFields('todos'),
-  ...Todo.fields,
-}) {
-  static Array = Schema.Array(TodoWithSystemFields)
-  static Option = Schema.Option(TodoWithSystemFields)
-  static ListArgs = Schema.Struct({
-    text: TodoWithSystemFields.fields.text,
-  })
-  static InsertArgs = Schema.Struct({
-    text: TodoWithSystemFields.fields.text,
+  // Helper schemas
+  export const Array = Schema.Array(WithSystemFields)
+  export const Option = Schema.Option(WithSystemFields)
+
+  export const InsertArgs = Schema.Struct({
+    text: Schema.String.pipe(Schema.maxLength(100)),
   })
 
-  static FindByIdArgs = Schema.Struct({
-    id: TodoWithSystemFields.fields._id,
+  export const FindByIdArgs = Schema.Struct({
+    id: systemFields('todos')._id,
   })
+
+  // Fields for easy access
+  export const fields = {
+    ...systemFields('todos'),
+    ...Todo.fields,
+  }
 }
