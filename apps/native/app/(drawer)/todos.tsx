@@ -1,51 +1,32 @@
-import { Atom, Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
+import { Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
 import * as Array from 'effect/Array'
-import * as Effect from 'effect/Effect'
 
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {
+  addTodoAtom,
+  deleteTodoAtom,
+  getFirstTodoAtom,
+  todosQueryAtom,
+  todoTextAtom,
+  toggleTodoAtom,
+} from '@/atoms/todos'
 import { Container } from '@/components/container'
-import { ApiService } from '@/lib/api'
-import { atomRuntime } from '@/lib/runtime'
-
-const todoTextAtom = Atom.make('')
-// Create a simple atom that just executes the effect
-const getFirstTodoAtom = atomRuntime.fn(
-  Effect.fnUntraced(function* () {
-    const client = yield* ApiService
-    return yield* client.notes.getFirst()
-  }),
-)
 
 export default function TodosScreen() {
   const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
-  const todosQueryEffect = useQuery(api, 'functions', 'listTodos')({})
-  const todosQueryAtom = atomRuntime.atom(todosQueryEffect)
+  // ✅ Clean component - only imports and uses atoms
+  // ✅ No business logic, no atom creation
+  // ✅ Better performance and memoization
+
   const todosResult = useAtomValue(todosQueryAtom)
-
-  const toggleActionEffect = useAction(api, 'functions', 'toggleTodo')
-  const handleToggleTodoAtom = atomRuntime.fn(toggleActionEffect)
-  const handleToggleTodo = useAtomSet(handleToggleTodoAtom, { mode: 'promise' })
-
+  const [addNewTodoResult, setAddNewTodo] = useAtom(addTodoAtom, { mode: 'promise' })
+  const handleToggleTodo = useAtomSet(toggleTodoAtom, { mode: 'promise' })
+  const handleDeleteTodo = useAtomSet(deleteTodoAtom, { mode: 'promise' })
   const firstTodoResult = useAtomValue(getFirstTodoAtom)
   const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
-
-  const createTodo = useMutation(api, 'functions', 'insertTodo')
-  const handleAddTodoAtom = atomRuntime.fn(
-    Effect.fn(function* (text: string, get: Atom.FnContext) {
-      yield* createTodo({ text })
-      get.set(todoTextAtom, '')
-    }),
-  )
-  const [addNewTodoResult, setAddNewTodo] = useAtom(handleAddTodoAtom, { mode: 'promise' })
-
-  const removeTodoEffect = useMutation(api, 'functions', 'deleteTodo')
-  const handleDeleteTodoAtom = atomRuntime.fn(removeTodoEffect)
-  const handleDeleteTodo = useAtomSet(handleDeleteTodoAtom, { mode: 'promise' })
 
   const handleDeleteTodoWithAlert = (id: Id<'todos'>) => {
     Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [

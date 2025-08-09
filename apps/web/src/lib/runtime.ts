@@ -1,4 +1,5 @@
 import * as FetchHttpClient from '@effect/platform/FetchHttpClient'
+import * as Reactivity from '@effect/experimental/Reactivity'
 import { makeAtomRuntimeLayer } from '@monorepo/shared/make-atom-runtime-layer'
 import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
@@ -11,6 +12,7 @@ export const MainLayer = Logger.pretty.pipe(
   Layer.provideMerge(Layer.setConfigProvider(ConfigProvider.fromJson(import.meta.env))),
   Layer.provideMerge(Logger.minimumLogLevel(LogLevel.Debug)),
   Layer.provideMerge(ApiService.Default.pipe(Layer.provide(FetchHttpClient.layer))),
+  Layer.provideMerge(Reactivity.layer), // 🎯 CLAVE: Add Reactivity service
   Layer.tapErrorCause(Effect.logError),
 )
 

@@ -5,6 +5,7 @@
         "name": "@effect/language-service"
       }
     ],
+    "jsx": "preserve",
     "importsNotUsedAsValues": "remove",
     "exactOptionalPropertyTypes": false,
     "lib": ["ESNext", "DOM"],

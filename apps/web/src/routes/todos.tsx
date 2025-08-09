@@ -1,56 +1,44 @@
 import { Result } from '@effect-atom/atom'
-import { Atom, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
-import { api } from '@monorepo/backend/convex/_generated/api'
-import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
+import { useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
 import { Input } from '@monorepo/ui-web/components/primitives/input'
 import { createFileRoute } from '@tanstack/react-router'
 import * as Array from 'effect/Array'
-import * as Effect from 'effect/Effect'
 import { constant } from 'effect/Function'
 import { Trash2 } from 'lucide-react'
-import { ApiService } from '@/lib/api'
+
+import { api } from '@monorepo/backend/convex/_generated/api'
+import { ConfectProvider, useAtomValueConfect, useAtomSetConfect, useAtomSetConfectAction } from '@monorepo/confect/react/effect-atom'
 import { atomRuntime } from '@/lib/runtime'
+import {
+  getFirstTodoAtom,
+  todoTextAtom,
+} from '@/atoms/todos'
 export const Route = createFileRoute('/todos')({
-  component: TodosRoute,
+  component: () => (
+    <ConfectProvider atomRuntime={atomRuntime}>
+      <TodosRoute />
+    </ConfectProvider>
+  ),
 })
-const todoTextAtom = Atom.make('')
-// Create a simple atom that just executes the effect
-const getFirstTodoAtom = atomRuntime.fn(
-  Effect.fnUntraced(function* () {
-    const client = yield* ApiService
-    return yield* client.notes.getFirst()
-  }),
-)
 
 function TodosRoute() {
+  // ✅ Clean component - only imports and uses atoms
+  // ✅ No business logic, no atom creation
+  // ✅ Better performance and memoization
+
   const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
-  const todosQueryEffect = useQuery(api, 'functions', 'listTodos')({})
-  const todosQueryAtom = atomRuntime.atom(todosQueryEffect)
-  const todosResult = useAtomValue(todosQueryAtom)
-
-  const toggleActionEffect = useAction(api, 'functions', 'toggleTodo')
-  const handleToggleTodoAtom = atomRuntime.fn(toggleActionEffect)
-  const handleToggleTodo = useAtomSet(handleToggleTodoAtom, { mode: 'promise' })
+  // 🎯 NEW API: Use Confect hooks - atoms memoizados que usan Effects existentes
+  const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
+  const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
+  const toggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo') // Action
+  const deleteTodo = useAtomSetConfect(api, 'functions', 'deleteTodo')
 
   const firstTodoResult = useAtomValue(getFirstTodoAtom)
   const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
-
-  const createTodo = useMutation(api, 'functions', 'insertTodo')
-  const handleAddTodoAtom = atomRuntime.fn(
-    Effect.fn(function* (text: string, get: Atom.FnContext) {
-      yield* createTodo({ text })
-      get.set(todoTextAtom, '')
-    }),
-  )
-  const [addNewTodoResult, setAddNewTodo] = useAtom(handleAddTodoAtom, { mode: 'promise' })
-
-  const removeTodoEffect = useMutation(api, 'functions', 'deleteTodo')
-  const handleDeleteTodoAtom = atomRuntime.fn(removeTodoEffect)
-  const handleDeleteTodo = useAtomSet(handleDeleteTodoAtom, { mode: 'promise' })
 
   return (
     <div className="mx-auto w-full max-w-md py-10">
@@ -67,8 +55,11 @@ function TodosRoute() {
               value={newTodoText}
             />
             <Button
-              disabled={!newTodoText.trim() || addNewTodoResult.waiting}
-              onClick={() => setAddNewTodo(newTodoText)}
+              disabled={!newTodoText.trim()}
+              onClick={() => {
+                addTodo({ text: newTodoText })
+                setNewTodoText('')
+              }}
               type="submit"
             >
               Add
@@ -76,18 +67,18 @@ function TodosRoute() {
           </div>
           {Result.builder(todosResult)
             .onInitial((result) => Result.isInitial(result) && result.waiting && <p>Loading...</p>)
-            .onSuccess((todosData) =>
+            .onSuccess((todosData: any) =>
               Array.isEmptyReadonlyArray(todosData) ? (
                 <p>No todos yet. Add one above!</p>
               ) : (
                 <ul className="space-y-2">
-                  {Array.map(todosData, (todo) => (
+                  {Array.map(todosData, (todo: any) => (
                     <li className="flex items-center justify-between rounded-md border p-2" key={todo._id}>
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={todo.completed}
                           id={`todo-${todo._id}`}
-                          onCheckedChange={() => handleToggleTodo({ id: todo._id })}
+                          onCheckedChange={() => toggleTodo({ id: todo._id })}
                         />
                         <label
                           className={`${todo.completed ? 'text-muted-foreground line-through' : ''}`}
@@ -98,7 +89,7 @@ function TodosRoute() {
                       </div>
                       <Button
                         aria-label="Delete todo"
-                        onClick={() => handleDeleteTodo({ id: todo._id })}
+                        onClick={() => deleteTodo({ id: todo._id })}
                         size="icon"
                         variant="ghost"
                       >
@@ -111,15 +102,16 @@ function TodosRoute() {
             )
             .onDefect(() => <p>Error loading todos</p>)
             .onFailure(constant('Error loading todos'))
-            .orNull()}
-          <Button onClick={() => handleGetFirstTodo()}>Get First Todo</Button>
-          <div>
-            {Result.builder(firstTodoResult)
-              .onInitial(() => <p>Initial state (not waiting)</p>)
-              .onWaiting(() => <p>Loading...</p>)
-              .onSuccess((data) => <p>{data?.text ?? 'No todos found'}</p>)
-              .render()}
-          </div>
+            .render()}
+
+            <Button onClick={() => handleGetFirstTodo()}>Get First Todo</Button>
+              <div>
+                {Result.builder(firstTodoResult)
+                  .onInitial(() => <p>Initial state (not waiting)</p>)
+                  .onWaiting(() => <p>Loading...</p>)
+                  .onSuccess((data) => <p>{data?.text ?? 'No todos found'}</p>)
+                  .render()}
+              </div>
         </CardContent>
       </Card>
     </div>

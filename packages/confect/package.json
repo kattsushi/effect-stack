@@ -21,7 +21,7 @@
   "exports": {
     "./server": "./src/server/index.ts",
     "./react": "./src/react/index.ts",
-    "./react/effect": "./src/react/effect.ts"
+    "./react/effect-atom": "./src/react/effect-atom.tsx"
   },
   "bin": {
     "confect-generate": "./bin/confect-generate.js"
