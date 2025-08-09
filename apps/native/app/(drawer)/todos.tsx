@@ -1,59 +1,51 @@
-import { Atom, Result, useAtom, useAtomValue } from '@effect-atom/atom-react'
+import { Atom, Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
 import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
-import { useAtomPromise, useAtomSetPromiseUnwrapped } from '@monorepo/shared/atom-utils'
+import * as Array from 'effect/Array'
 import * as Effect from 'effect/Effect'
 
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { Container } from '@/components/container'
+import { ApiService } from '@/lib/api'
 import { atomRuntime } from '@/lib/runtime'
 
 const todoTextAtom = Atom.make('')
+// Create a simple atom that just executes the effect
+const getFirstTodoAtom = atomRuntime.fn(
+  Effect.fnUntraced(function* () {
+    const client = yield* ApiService
+    return yield* client.notes.getFirst()
+  }),
+)
 
 export default function TodosScreen() {
   const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
-  const todosQuery = useQuery(api, 'functions', 'listTodos')({})
-  const todosQueryAtom = atomRuntime.atom(todosQuery)
-  const todos = useAtomValue(todosQueryAtom)
+  const todosQueryEffect = useQuery(api, 'functions', 'listTodos')({})
+  const todosQueryAtom = atomRuntime.atom(todosQueryEffect)
+  const todosResult = useAtomValue(todosQueryAtom)
 
-  const createTodoMutation = useMutation(api, 'functions', 'insertTodo')
-  const toggleTodoMutation = useAction(api, 'functions', 'toggleTodo')
-  const deleteTodoMutation = useMutation(api, 'functions', 'deleteTodo')
+  const toggleActionEffect = useAction(api, 'functions', 'toggleTodo')
+  const handleToggleTodoAtom = atomRuntime.fn(toggleActionEffect)
+  const handleToggleTodo = useAtomSet(handleToggleTodoAtom, { mode: 'promise' })
 
+  const firstTodoResult = useAtomValue(getFirstTodoAtom)
+  const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
+
+  const createTodo = useMutation(api, 'functions', 'insertTodo')
   const handleAddTodoAtom = atomRuntime.fn(
-    Effect.fn(function* (_: undefined, get: Atom.FnContext) {
-      const text = get(todoTextAtom).trim()
-      if (text) {
-        get.set(todoTextAtom, '')
-        yield* createTodoMutation({ text })
-        yield* Effect.log('Todo added')
-      }
+    Effect.fn(function* (text: string, get: Atom.FnContext) {
+      yield* createTodo({ text })
+      get.set(todoTextAtom, '')
     }),
   )
+  const [addNewTodoResult, setAddNewTodo] = useAtom(handleAddTodoAtom, { mode: 'promise' })
 
-  const [addState, setAdd] = useAtomPromise(handleAddTodoAtom)
-
-  const handleAddTodo = () => setAdd(undefined)
-  const handleSubmitEditing = () => setAdd(undefined)
-
-  const handleToggleTodoAtom = atomRuntime.fn(
-    Effect.fn(function* (id: Id<'todos'>) {
-      return yield* toggleTodoMutation({ id })
-    }),
-  )
-
-  const handleToggleTodo = useAtomSetPromiseUnwrapped(handleToggleTodoAtom)
-
-  const handleDeleteTodoAtom = atomRuntime.fn(
-    Effect.fnUntraced(function* (id: Id<'todos'>) {
-      return yield* deleteTodoMutation({ id })
-    }),
-  )
-
-  const handleDeleteTodo = useAtomSetPromiseUnwrapped(handleDeleteTodoAtom)
+  const removeTodoEffect = useMutation(api, 'functions', 'deleteTodo')
+  const handleDeleteTodoAtom = atomRuntime.fn(removeTodoEffect)
+  const handleDeleteTodo = useAtomSet(handleDeleteTodoAtom, { mode: 'promise' })
 
   const handleDeleteTodoWithAlert = (id: Id<'todos'>) => {
     Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [
@@ -61,10 +53,13 @@ export default function TodosScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => handleDeleteTodo(id),
+        onPress: () => handleDeleteTodo({ id }),
       },
     ])
   }
+
+  const handleAddTodo = () => setAddNewTodo(newTodoText)
+  const handleSubmitEditing = () => setAddNewTodo(newTodoText)
 
   return (
     <Container>
@@ -87,7 +82,7 @@ export default function TodosScreen() {
                 />
                 <TouchableOpacity
                   className={`rounded-md px-4 py-2 ${newTodoText.trim() ? 'bg-primary' : 'bg-muted'}`}
-                  disabled={!newTodoText.trim() || addState.waiting}
+                  disabled={!newTodoText.trim() || addNewTodoResult.waiting}
                   onPress={handleAddTodo}
                 >
                   <Text className="font-medium text-white">Add</Text>
@@ -96,7 +91,7 @@ export default function TodosScreen() {
             </View>
 
             <View className="space-y-2">
-              {Result.builder(todos)
+              {Result.builder(todosResult)
                 .onInitial(
                   (result) =>
                     Result.isInitial(result) &&
@@ -107,34 +102,52 @@ export default function TodosScreen() {
                     ),
                 )
                 .onSuccess((todosData) =>
-                  todosData.map((todo) => (
-                    <View
-                      className="flex-row items-center justify-between rounded-md border border-border bg-background p-3"
-                      key={todo._id}
-                    >
-                      <View className="flex-1 flex-row items-center">
-                        <TouchableOpacity className="mr-3" onPress={() => handleToggleTodo(todo._id)}>
-                          <Ionicons
-                            color={todo.completed ? '#22c55e' : '#6b7280'}
-                            name={todo.completed ? 'checkbox' : 'square-outline'}
-                            size={24}
-                          />
+                  Array.isEmptyReadonlyArray(todosData) ? (
+                    <Text className="text-muted-foreground">No todos yet. Add one above!</Text>
+                  ) : (
+                    todosData.map((todo) => (
+                      <View
+                        className="flex-row items-center justify-between rounded-md border border-border bg-background p-3"
+                        key={todo._id}
+                      >
+                        <View className="flex-1 flex-row items-center">
+                          <TouchableOpacity className="mr-3" onPress={() => handleToggleTodo({ id: todo._id })}>
+                            <Ionicons
+                              color={todo.completed ? '#22c55e' : '#6b7280'}
+                              name={todo.completed ? 'checkbox' : 'square-outline'}
+                              size={24}
+                            />
+                          </TouchableOpacity>
+                          <Text
+                            className={`flex-1 ${
+                              todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                            }`}
+                          >
+                            {todo.text}
+                          </Text>
+                        </View>
+                        <TouchableOpacity className="ml-2 p-1" onPress={() => handleDeleteTodoWithAlert(todo._id)}>
+                          <Ionicons color="#ef4444" name="trash-outline" size={20} />
                         </TouchableOpacity>
-                        <Text
-                          className={`flex-1 ${
-                            todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
-                          }`}
-                        >
-                          {todo.text}
-                        </Text>
                       </View>
-                      <TouchableOpacity className="ml-2 p-1" onPress={() => handleDeleteTodoWithAlert(todo._id)}>
-                        <Ionicons color="#ef4444" name="trash-outline" size={20} />
-                      </TouchableOpacity>
-                    </View>
-                  )),
+                    ))
+                  ),
                 )
+                .onDefect(() => <Text className="text-red-500">Error loading todos</Text>)
+                .onFailure(() => <Text className="text-red-500">Error loading todos</Text>)
                 .orNull()}
+            </View>
+
+            <TouchableOpacity className="mt-4 rounded-md bg-secondary px-4 py-2" onPress={() => handleGetFirstTodo()}>
+              <Text className="text-center font-medium text-secondary-foreground">Get First Todo</Text>
+            </TouchableOpacity>
+
+            <View className="mt-4">
+              {Result.builder(firstTodoResult)
+                .onInitial(() => <Text className="text-muted-foreground">Initial state (not waiting)</Text>)
+                .onWaiting(() => <Text className="text-muted-foreground">Loading...</Text>)
+                .onSuccess((data) => <Text className="text-foreground">{data?.text ?? 'No todos found'}</Text>)
+                .render()}
             </View>
           </View>
         </View>
