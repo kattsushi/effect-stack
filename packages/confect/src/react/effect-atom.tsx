@@ -1,13 +1,8 @@
-import { useAtomValue, useAtomSet } from '@effect-atom/atom-react'
+import { Atom, useAtomValue, useAtomSet } from '@effect-atom/atom-react'
 import type { Result } from '@effect-atom/atom'
 import * as Effect from 'effect/Effect'
-import React, { createContext, useContext } from 'react'
-import { useQuery, useMutation, useAction } from './index'
-import type {
-  InferFunctionArgs,
-  InferFunctionReturnsHybrid,
-  InferFunctionErrors,
-} from './types.d.ts'
+import { createContext, useContext } from 'react'
+import { useQuery as useConvexQuery, useMutation as useConvexMutation, useAction as useConvexAction } from 'convex/react'
 
 // Context for atom runtime
 const ConfectContext = createContext<any>(null)
@@ -40,7 +35,19 @@ function useAtomRuntime() {
   return atomRuntime
 }
 
-// Types are now imported from ./types
+// Type inference from Convex API structure
+type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
+type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
+
+// Extract error types from ConfectErrorTypes interface (declaration merging)
+type InferFunctionErrors<F extends string> = F extends keyof import('./index').ConfectErrorTypes
+  ? import('./index').ConfectErrorTypes[F]
+  : any
+
+// Extract return types from ConfectReturnTypes interface (declaration merging)
+type InferFunctionReturnsHybrid<T, F> = F extends keyof import('./index').ConfectReturnTypes
+  ? import('./index').ConfectReturnTypes[F]
+  : InferFunctionReturns<T>
 
 
 
@@ -65,10 +72,16 @@ export function useAtomValueConfect<
 ): Result.Result<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SIMPLE: Usar directamente el hook existente que ya funciona
-  const queryEffect = useQuery(apiObject, moduleName, functionName)(args)
+  // 🎯 SOLUCIÓN: Usar directamente useConvexQuery en el contexto correcto
+  const fn = apiObject[moduleName][functionName]
+  const convexResult = useConvexQuery(fn, args)
 
-  // Crear atom que ejecuta el Effect (se recrea en cada render, pero es rápido)
+  // Crear Effect que devuelve el resultado de Convex
+  const queryEffect = convexResult === undefined
+    ? Effect.never
+    : Effect.succeed(convexResult)
+
+  // Crear atom que ejecuta el Effect
   const queryAtom = atomRuntime.atom(queryEffect)
 
   // Usar useAtomValue para obtener el Result
@@ -94,19 +107,20 @@ export function useAtomSetConfect<
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SIMPLE: Usar directamente el hook existente que ya funciona
-  const mutationEffect = useMutation(apiObject, moduleName, functionName)
+  // 🎯 SOLUCIÓN: Usar directamente useConvexMutation en el contexto correcto
+  const fn = apiObject[moduleName][functionName]
+  const convexMutation = useConvexMutation(fn)
 
   // Crear atom que ejecuta el Effect (se recrea en cada render, pero es rápido)
   const mutationAtom = atomRuntime.fn(
-    Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+    Effect.fn(function* (args: any) {
       const mutationId = Math.random().toString(36).substring(2, 11)
       const mutationKey = `${String(moduleName)}.${String(functionName)}`
 
       yield* Effect.log(`🎯 [${mutationKey}] 🚀 STARTING mutation #${mutationId}`)
 
-      // Ejecutar el Effect del hook existente
-      const result = yield* mutationEffect(args)
+      // Ejecutar la mutation de Convex directamente
+      const result = yield* Effect.promise(() => convexMutation(args))
 
       yield* Effect.log(`🎯 [${mutationKey}] ✅ COMPLETED mutation #${mutationId}`)
 
@@ -137,19 +151,20 @@ export function useAtomSetConfectAction<
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SIMPLE: Usar directamente el hook existente que ya funciona
-  const actionEffect = useAction(apiObject, moduleName, functionName)
+  // 🎯 SOLUCIÓN: Usar directamente useConvexAction en el contexto correcto
+  const fn = apiObject[moduleName][functionName]
+  const convexAction = useConvexAction(fn)
 
   // Crear atom que ejecuta el Effect (se recrea en cada render, pero es rápido)
   const actionAtom = atomRuntime.fn(
-    Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+    Effect.fn(function* (args: any) {
       const actionId = Math.random().toString(36).substring(2, 11)
       const actionKey = `${String(moduleName)}.${String(functionName)}`
 
       yield* Effect.log(`⚡ [${actionKey}] 🚀 STARTING action #${actionId}`)
 
-      // Ejecutar el Effect del hook existente
-      const result = yield* actionEffect(args)
+      // Ejecutar la action de Convex directamente
+      const result = yield* Effect.promise(() => convexAction(args))
 
       yield* Effect.log(`⚡ [${actionKey}] ✅ COMPLETED action #${actionId}`)
 

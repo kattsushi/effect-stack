@@ -1,30 +1,30 @@
 import { Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { Ionicons } from '@expo/vector-icons'
+import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import * as Array from 'effect/Array'
-
-import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import {
-  addTodoAtom,
-  deleteTodoAtom,
-  getFirstTodoAtom,
-  todosQueryAtom,
-  todoTextAtom,
-  toggleTodoAtom,
-} from '@/atoms/todos'
+  ConfectProvider,
+  useAtomSetConfect,
+  useAtomSetConfectAction,
+  useAtomValueConfect,
+} from '@monorepo/confect/react/effect-atom'
+import * as Array from 'effect/Array'
+import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { getFirstTodoAtom, todoTextAtom } from '@/atoms/todos'
 import { Container } from '@/components/container'
+import { atomRuntime } from '@/lib/runtime'
 
-export default function TodosScreen() {
+function TodosScreen() {
   const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
   // ✅ Clean component - only imports and uses atoms
   // ✅ No business logic, no atom creation
   // ✅ Better performance and memoization
 
-  const todosResult = useAtomValue(todosQueryAtom)
-  const [addNewTodoResult, setAddNewTodo] = useAtom(addTodoAtom, { mode: 'promise' })
-  const handleToggleTodo = useAtomSet(toggleTodoAtom, { mode: 'promise' })
-  const handleDeleteTodo = useAtomSet(deleteTodoAtom, { mode: 'promise' })
+  const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
+  const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
+  const handleToggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
+  const handleDeleteTodo = useAtomSetConfect(api, 'functions', 'deleteTodo')
   const firstTodoResult = useAtomValue(getFirstTodoAtom)
   const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
 
@@ -39,8 +39,12 @@ export default function TodosScreen() {
     ])
   }
 
-  const handleAddTodo = () => setAddNewTodo(newTodoText)
-  const handleSubmitEditing = () => setAddNewTodo(newTodoText)
+  const handleAddTodo = () => {
+    if (newTodoText.trim()) {
+      addTodo({ text: newTodoText.trim() })
+      setNewTodoText('') // Clear input after adding
+    }
+  }
 
   return (
     <Container>
@@ -55,7 +59,6 @@ export default function TodosScreen() {
                 <TextInput
                   className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-foreground"
                   onChangeText={setNewTodoText}
-                  onSubmitEditing={handleSubmitEditing}
                   placeholder="Add a new task..."
                   placeholderTextColor="#6b7280"
                   returnKeyType="done"
@@ -63,7 +66,7 @@ export default function TodosScreen() {
                 />
                 <TouchableOpacity
                   className={`rounded-md px-4 py-2 ${newTodoText.trim() ? 'bg-primary' : 'bg-muted'}`}
-                  disabled={!newTodoText.trim() || addNewTodoResult.waiting}
+                  disabled={!newTodoText.trim()}
                   onPress={handleAddTodo}
                 >
                   <Text className="font-medium text-white">Add</Text>
@@ -119,7 +122,10 @@ export default function TodosScreen() {
                 .orNull()}
             </View>
 
-            <TouchableOpacity className="mt-4 rounded-md bg-secondary px-4 py-2" onPress={() => handleGetFirstTodo()}>
+            <TouchableOpacity
+              className="mt-4 rounded-md bg-secondary px-4 py-2"
+              onPress={() => handleGetFirstTodo(undefined)}
+            >
               <Text className="text-center font-medium text-secondary-foreground">Get First Todo</Text>
             </TouchableOpacity>
 
@@ -134,5 +140,14 @@ export default function TodosScreen() {
         </View>
       </ScrollView>
     </Container>
+  )
+}
+
+// Export with ConfectProvider wrapper
+export default function TodosScreenWithProvider() {
+  return (
+    <ConfectProvider atomRuntime={atomRuntime}>
+      <TodosScreen />
+    </ConfectProvider>
   )
 }

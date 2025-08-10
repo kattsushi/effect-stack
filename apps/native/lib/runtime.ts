@@ -1,5 +1,4 @@
 import * as FetchHttpClient from '@effect/platform/FetchHttpClient'
-import { ConvexClientService, QueryInvalidationService } from '@monorepo/confect/react'
 import { makeAtomRuntimeLayer } from '@monorepo/shared/make-atom-runtime-layer'
 import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
@@ -12,8 +11,6 @@ export const MainLayer = Logger.pretty.pipe(
   Layer.provideMerge(Layer.setConfigProvider(ConfigProvider.fromJson(process.env))),
   Layer.provideMerge(Logger.minimumLogLevel(LogLevel.Debug)),
   Layer.provideMerge(ApiService.Default.pipe(Layer.provide(FetchHttpClient.layer))),
-  Layer.provideMerge(ConvexClientService.Default),
-  Layer.provideMerge(QueryInvalidationService.Default),
   Layer.tapErrorCause(Effect.logError),
 )
 
