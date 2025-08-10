@@ -1,8 +1,13 @@
-import { Atom, useAtomValue, useAtomSet } from '@effect-atom/atom-react'
+import { useAtomValue, useAtomSet } from '@effect-atom/atom-react'
 import type { Result } from '@effect-atom/atom'
 import * as Effect from 'effect/Effect'
-import { createContext, useContext } from 'react'
+import React, { createContext, useContext } from 'react'
 import { useQuery, useMutation, useAction } from './index'
+import type {
+  InferFunctionArgs,
+  InferFunctionReturnsHybrid,
+  InferFunctionErrors,
+} from './types.d.ts'
 
 // Context for atom runtime
 const ConfectContext = createContext<any>(null)
@@ -35,19 +40,7 @@ function useAtomRuntime() {
   return atomRuntime
 }
 
-// Type inference from Convex API structure
-type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
-type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
-
-// Extract error types from ConfectErrorTypes interface (declaration merging)
-type InferFunctionErrors<F extends string> = F extends keyof import('./index').ConfectErrorTypes
-  ? import('./index').ConfectErrorTypes[F]
-  : any
-
-// Extract return types from ConfectReturnTypes interface (declaration merging)
-type InferFunctionReturnsHybrid<T, F> = F extends keyof import('./index').ConfectReturnTypes
-  ? import('./index').ConfectReturnTypes[F]
-  : InferFunctionReturns<T>
+// Types are now imported from ./types
 
 
 

@@ -1,6 +1,8 @@
-import { Schema } from 'effect'
+import { Schema } from "effect";
 
-export const UserIdentity = <CustomClaimsFields extends Schema.Struct.Fields>(customClaimsFields: CustomClaimsFields) =>
+export const UserIdentity = <CustomClaimsFields extends Schema.Struct.Fields>(
+  customClaimsFields: CustomClaimsFields,
+) =>
   Schema.Struct({
     ...customClaimsFields,
     tokenIdentifier: Schema.String,
@@ -23,4 +25,4 @@ export const UserIdentity = <CustomClaimsFields extends Schema.Struct.Fields>(cu
     phoneNumberVerified: Schema.optional(Schema.Boolean),
     address: Schema.optional(Schema.String),
     updatedAt: Schema.optional(Schema.String),
-  })
+  });

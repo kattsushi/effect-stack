@@ -4,24 +4,61 @@ import {
   useAction as useConvexAction,
 } from 'convex/react'
 
-import { Effect } from 'effect'
+import * as Effect from 'effect/Effect'
+import * as Option from 'effect/Option'
+import type {
+  InferFunctionArgs,
+  InferFunctionReturnsHybrid,
+  InferFunctionErrors,
+} from './types.d.ts'
 
-// Error types will be provided via declaration merging
-export interface ConfectErrorTypes {}
+// Re-export all types for external use
+export type {
+  ConfectErrorTypes,
+  ConfectReturnTypes,
+  InferFunctionArgs,
+  InferFunctionReturns,
+  InferFunctionErrors,
+  InferFunctionReturnsHybrid,
+  ApiObject,
+  ModuleName,
+  FunctionName,
+} from './types.d.ts'
 
-// Return types will be provided via declaration merging
-export interface ConfectReturnTypes {}
 
-// Type inference from Convex API structure (same as in index.ts)
-type InferFunctionArgs<T> = T extends { _args: infer Args } ? Args : any
-type InferFunctionReturns<T> = T extends { _returnType: infer Returns } ? Returns : any
 
-// Extract error types from ConfectErrorTypes interface (declaration merging)
-type InferFunctionErrors<F extends string> = F extends keyof ConfectErrorTypes
-  ? ConfectErrorTypes[F]
-  : any
+// Dynamic API overload for useQueryOption (same interface as useQuery but returning Option)
+export function useQueryOption<
+  ApiObject extends Record<string, any>,
+  M extends keyof ApiObject,
+  F extends keyof ApiObject[M] & string,
+>(
+  apiObject: ApiObject,
+  moduleName: M,
+  functionName: F,
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<InferFunctionReturnsHybrid<ApiObject[M][F], F>>
 
-type InferFunctionReturnsHybrid<T, _F> = InferFunctionReturns<T>
+// Implementation that handles the API (same strategy as useQuery but returns Option)
+export function useQueryOption(...args: any[]) {
+  // Extract arguments
+  const [apiObject, moduleName, functionName] = args
+  const fn = apiObject[moduleName][functionName]
+
+  return (actualArgs: any) => {
+    // Use the existing Convex hook to get result
+    const convexResult = useConvexQuery(fn, actualArgs)
+
+    // Transform result to Option
+    if (convexResult === undefined) {
+      // Still loading - return None
+      return Option.none()
+    }
+
+    // Return Some with the result
+    return Option.some(convexResult)
+  }
+}
+
 
 // Dynamic API overload (same as useQuery but returning Effect)
 export function useQuery<

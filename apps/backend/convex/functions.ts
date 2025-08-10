@@ -13,7 +13,7 @@ import {
 import { TodoSchema } from './functions.schemas'
 
 export class NotFoundError extends Schema.TaggedError<NotFoundError>('NotFoundError')('NotFoundError', {}) {
-  override get message(): string {
+  get message(): string {
     return 'Not Found'
   }
 }

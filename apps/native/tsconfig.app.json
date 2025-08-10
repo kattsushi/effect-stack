@@ -13,19 +13,12 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts",
-    "confect-env.d.ts"
+    "nativewind-env.d.ts"
   ],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
   "references": [
     {
       "path": "../backend/tsconfig.lib.json"
-    },
-    {
-      "path": "../../packages/ui/native"
-    },
-    {
-      "path": "../../packages/shared/tsconfig.lib.json"
     }
   ]
 }

@@ -4,9 +4,10 @@ packages:
 
 catalog:
   # Effect Ecosystem
-  'effect': '3.17.6'
+  
+  'effect': '3.17.7'
+  '@effect/platform': '0.90.1'
   '@effect/platform-node': '0.94.1'
-  '@effect/platform': '0.90.0'
   '@effect/vitest': '0.25.0'
   '@effect/experimental': '0.54.4'
   '@effect/language-service': '0.34.0'
@@ -38,7 +39,7 @@ catalog:
   '@convex-dev/react-query': '^0.0.0-alpha.8'
 
   # Build tools & TypeScript
-  'typescript': '~5.8.2'
+  'typescript': '~5.9.2'
   'vite': '^7.0.6'
   '@vitejs/plugin-react': '^4.5.2'
   '@vitejs/plugin-react-swc': '^3.5.0'
