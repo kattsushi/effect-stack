@@ -1,7 +1,7 @@
-import { Atom, useAtomValue, useAtomSet } from '@effect-atom/atom-react'
+import { useAtomValue, useAtomSet } from '@effect-atom/atom-react'
 import type { Result } from '@effect-atom/atom'
 import * as Effect from 'effect/Effect'
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import { useQuery, useMutation, useAction } from './index'
 
 // Context for atom runtime
@@ -72,11 +72,13 @@ export function useAtomValueConfect<
 ): Result.Result<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SOLUCIÓN: Usar el hook de Confect que devuelve Effect
+  // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
   const queryEffect = useQuery(apiObject, moduleName, functionName)(args)
 
-  // Crear atom que ejecuta el Effect
-  const queryAtom = atomRuntime.atom(queryEffect)
+  const queryAtom = useMemo(() =>
+    atomRuntime.atom(queryEffect),
+    [queryEffect, atomRuntime]
+  )
 
   // Usar useAtomValue para obtener el Result
   return useAtomValue(queryAtom)
@@ -101,24 +103,26 @@ export function useAtomSetConfect<
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SOLUCIÓN: Usar el hook de Confect que devuelve Effect
+  // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
   const mutationEffect = useMutation(apiObject, moduleName, functionName)
 
-  // Crear atom que ejecuta el Effect (se recrea en cada render, pero es rápido)
-  const mutationAtom = atomRuntime.fn(
-    Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
-      const mutationId = Math.random().toString(36).substring(2, 11)
-      const mutationKey = `${String(moduleName)}.${String(functionName)}`
+  const mutationAtom = useMemo(() =>
+    atomRuntime.fn(
+      Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+        const mutationId = Math.random().toString(36).substring(2, 11)
+        const mutationKey = `${String(moduleName)}.${String(functionName)}`
 
-      yield* Effect.log(`🎯 [${mutationKey}] 🚀 STARTING mutation #${mutationId}`)
+        yield* Effect.log(`🎯 [${mutationKey}] 🚀 STARTING mutation #${mutationId}`)
 
-      // Ejecutar el Effect del hook existente
-      const result = yield* mutationEffect(args)
+        // Ejecutar el Effect del hook existente
+        const result = yield* mutationEffect(args)
 
-      yield* Effect.log(`🎯 [${mutationKey}] ✅ COMPLETED mutation #${mutationId}`)
+        yield* Effect.log(`🎯 [${mutationKey}] ✅ COMPLETED mutation #${mutationId}`)
 
-      return result
-    }),
+        return result
+      }),
+    ),
+    [mutationEffect, atomRuntime]
   )
 
   // Usar useAtomSet para obtener la función de mutation
@@ -144,24 +148,26 @@ export function useAtomSetConfectAction<
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
   const atomRuntime = useAtomRuntime()
 
-  // 🎯 SOLUCIÓN: Usar el hook de Confect que devuelve Effect
+  // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
   const actionEffect = useAction(apiObject, moduleName, functionName)
 
-  // Crear atom que ejecuta el Effect (se recrea en cada render, pero es rápido)
-  const actionAtom = atomRuntime.fn(
-    Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
-      const actionId = Math.random().toString(36).substring(2, 11)
-      const actionKey = `${String(moduleName)}.${String(functionName)}`
+  const actionAtom = useMemo(() =>
+    atomRuntime.fn(
+      Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+        const actionId = Math.random().toString(36).substring(2, 11)
+        const actionKey = `${String(moduleName)}.${String(functionName)}`
 
-      yield* Effect.log(`⚡ [${actionKey}] 🚀 STARTING action #${actionId}`)
+        yield* Effect.log(`⚡ [${actionKey}] 🚀 STARTING action #${actionId}`)
 
-      // Ejecutar el Effect del hook existente
-      const result = yield* actionEffect(args)
+        // Ejecutar el Effect del hook existente
+        const result = yield* actionEffect(args)
 
-      yield* Effect.log(`⚡ [${actionKey}] ✅ COMPLETED action #${actionId}`)
+        yield* Effect.log(`⚡ [${actionKey}] ✅ COMPLETED action #${actionId}`)
 
-      return result
-    }),
+        return result
+      }),
+    ),
+    [actionEffect, atomRuntime]
   )
 
   // Usar useAtomSet para obtener la función de action
