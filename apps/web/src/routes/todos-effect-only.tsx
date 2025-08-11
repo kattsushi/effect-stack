@@ -1,7 +1,6 @@
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
 import { useAction, useMutation, useQueryOption } from '@monorepo/confect/react'
-import { ConfectProvider } from '@monorepo/confect/react/effect-atom'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
@@ -17,16 +16,16 @@ import { runtime } from '@/lib/runtime'
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useState('')
 
-  const todosOption = useQueryOption(api.functions.listTodos)({})
-  const addTodoEffect = useMutation(api.functions.insertTodo)
+  const todosOption = useQueryOption(api, 'functions', 'listTodos')({})
+  const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
   const handleAddTodo = (text: string) =>
     addTodoEffect({ text })
       .pipe(Effect.orDie, runtime.runPromise)
       .then(() => setNewTodoText(''))
 
-  const toggleTodoEffect = useAction(api.functions.toggleTodo)
+  const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
   const handleToggleTodo = (id: Id<'todos'>) => toggleTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
-  const deleteTodoEffect = useMutation(api.functions.deleteTodo)
+  const deleteTodoEffect = useMutation(api, 'functions', 'deleteTodo')
   const handleDeleteTodo = (id: Id<'todos'>) => deleteTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
   // Removed atom-based first todo functionality for effect-only version
 
@@ -104,9 +103,5 @@ function TodosRoute() {
 
 export const Route = createFileRoute('/todos-effect-only')({
   ssr: false, // TODO: Make it work with SSR
-  component: () => (
-    <ConfectProvider atomRuntime={runtime}>
-      <TodosRoute />
-    </ConfectProvider>
-  ),
+  component: TodosRoute,
 })

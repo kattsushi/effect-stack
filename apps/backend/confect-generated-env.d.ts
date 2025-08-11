@@ -5,7 +5,19 @@
 
 import type { NotFoundError } from './convex/functions.js'
 
-declare module '@monorepo/confect/react/effect' {
+// Module augmentation for main react module
+declare module '@monorepo/confect/react' {
+  interface ConfectErrorTypes {
+    insertTodo: NotFoundError
+    listTodos: NotFoundError
+    deleteTodo: NotFoundError
+    toggleTodo: NotFoundError
+    getFirst: NotFoundError
+  }
+}
+
+// Module augmentation for effect-atom module
+declare module '@monorepo/confect/react/effect-atom' {
   interface ConfectErrorTypes {
     insertTodo: NotFoundError
     listTodos: NotFoundError

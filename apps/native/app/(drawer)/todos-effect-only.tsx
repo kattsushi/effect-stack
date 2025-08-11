@@ -12,10 +12,10 @@ import { runtime } from '@/lib/runtime'
 
 function TodosScreen() {
   const [newTodoText, setNewTodoText] = useState('')
-  const todosOption = useQueryOption(api.functions.listTodos)({})
-  const addTodoEffect = useMutation(api.functions.insertTodo)
-  const toggleTodoEffect = useAction(api.functions.toggleTodo)
-  const deleteTodoEffect = useMutation(api.functions.deleteTodo)
+  const todosOption = useQueryOption(api, 'functions', 'listTodos')({})
+  const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
+  const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
+  const deleteTodoEffect = useMutation(api, 'functions', 'deleteTodo')
 
   const handleDeleteTodoWithAlert = (id: Id<'todos'>) => {
     Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [
@@ -119,5 +119,5 @@ function TodosScreen() {
   )
 }
 
-// Export effect-only version (no provider needed)
+// Export direct component (no provider needed)
 export default TodosScreen
