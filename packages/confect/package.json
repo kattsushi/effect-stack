@@ -60,6 +60,7 @@
   "peerDependencies": {
     "@effect/platform": "catalog:",
     "convex": "catalog:",
+    "@convex-dev/react-query": "catalog:",
     "effect": "catalog:"
   },
   "engines": {

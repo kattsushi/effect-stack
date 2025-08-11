@@ -1,8 +1,4 @@
-import {
-  useQuery as useConvexQuery,
-  useMutation as useConvexMutation,
-  useAction as useConvexAction,
-} from 'convex/react'
+import { useConvexQuery, useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 
 import { Effect } from 'effect'
 import * as Option from 'effect/Option'
@@ -23,8 +19,6 @@ type InferFunctionErrors<F extends string> = F extends keyof ConfectErrorTypes
   : any
 
 type InferFunctionReturnsHybrid<T, _F> = InferFunctionReturns<T>
-
-
 
 // Dynamic API overload for useQueryOption (same as useQuery but returning Option)
 export function useQueryOption<

@@ -36,7 +36,7 @@ catalog:
 
   # Backend & Database
   'convex': '^1.25.4'
-  '@convex-dev/react-query': '^0.0.0-alpha.8'
+  '@convex-dev/react-query': '0.0.0-alpha.10'
 
   # Build tools & TypeScript
   'typescript': '~5.9.2'

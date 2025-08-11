@@ -1,49 +1,38 @@
-import { Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useQueryOption } from '@monorepo/confect/react'
-import { ConfectProvider, useAtomSetConfect, useAtomSetConfectAction } from '@monorepo/confect/react/effect-atom'
+import { useAction, useMutation, useQueryOption } from '@monorepo/confect/react'
+import { ConfectProvider } from '@monorepo/confect/react/effect-atom'
 import { Button } from '@monorepo/ui-web/components/primitives/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@monorepo/ui-web/components/primitives/card'
 import { Checkbox } from '@monorepo/ui-web/components/primitives/checkbox'
 import { Input } from '@monorepo/ui-web/components/primitives/input'
 import { createFileRoute } from '@tanstack/react-router'
+import { Effect } from 'effect'
 import * as Array from 'effect/Array'
 import * as Option from 'effect/Option'
 import { Trash2 } from 'lucide-react'
-import { getFirstTodoAtom, todoTextAtom } from '@/atoms/todos'
-import { atomRuntime } from '@/lib/runtime'
+import { useState } from 'react'
+import { runtime } from '@/lib/runtime'
 
 function TodosRoute() {
-  const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
-
-  // ✅ Clean component - only imports and uses atoms
-  // ✅ No business logic, no atom creation
-  // ✅ Better performance and memoization
+  const [newTodoText, setNewTodoText] = useState('')
 
   const todosOption = useQueryOption(api, 'functions', 'listTodos')({})
-  const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
-  const handleToggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
-  const handleDeleteTodo = useAtomSetConfect(api, 'functions', 'deleteTodo')
-  const firstTodoResult = useAtomValue(getFirstTodoAtom)
-  const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
+  const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
+  const handleAddTodo = (text: string) =>
+    addTodoEffect({ text })
+      .pipe(Effect.orDie, runtime.runPromise)
+      .then(() => setNewTodoText(''))
+
+  const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
+  const handleToggleTodo = (id: Id<'todos'>) => toggleTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+  const deleteTodoEffect = useMutation(api, 'functions', 'deleteTodo')
+  const handleDeleteTodo = (id: Id<'todos'>) => deleteTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+  // Removed atom-based first todo functionality for effect-only version
 
   const handleDeleteTodoWithConfirm = (id: Id<'todos'>) => {
-    if (window.confirm('Are you sure you want to delete this todo?')) {
-      handleDeleteTodo({ id })
-    }
-  }
-
-  const handleAddTodo = () => {
-    if (newTodoText.trim()) {
-      addTodo({ text: newTodoText.trim() })
-      setNewTodoText('') // Clear input after adding
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTodo()
+    if (typeof window !== 'undefined' && window.confirm('Are you sure you want to delete this todo?')) {
+      handleDeleteTodo(id)
     }
   }
 
@@ -60,11 +49,10 @@ function TodosRoute() {
             <Input
               className="flex-1"
               onChange={(e) => setNewTodoText(e.target.value)}
-              onKeyPress={handleKeyPress}
               placeholder="Add a new task..."
               value={newTodoText}
             />
-            <Button disabled={!newTodoText.trim()} onClick={handleAddTodo}>
+            <Button disabled={!newTodoText.trim()} onClick={() => handleAddTodo(newTodoText.trim())}>
               Add
             </Button>
           </div>
@@ -84,7 +72,7 @@ function TodosRoute() {
                   todosData.map((todo) => (
                     <div className="flex items-center justify-between rounded-lg border bg-card p-3" key={todo._id}>
                       <div className="flex flex-1 items-center gap-3">
-                        <Checkbox checked={todo.completed} onCheckedChange={() => handleToggleTodo({ id: todo._id })} />
+                        <Checkbox checked={todo.completed} onCheckedChange={() => handleToggleTodo(todo._id)} />
                         <span
                           className={`flex-1 ${
                             todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
@@ -107,20 +95,7 @@ function TodosRoute() {
             })}
           </div>
 
-          {/* Get First Todo Section */}
-          <div className="border-t pt-4">
-            <Button className="w-full" onClick={() => handleGetFirstTodo(undefined)} variant="secondary">
-              Get First Todo
-            </Button>
-
-            <div className="mt-2">
-              {Result.builder(firstTodoResult)
-                .onInitial(() => <p className="text-muted-foreground text-sm">Initial state (not waiting)</p>)
-                .onWaiting(() => <p className="text-muted-foreground text-sm">Loading...</p>)
-                .onSuccess((data) => <p className="text-foreground text-sm">{data?.text ?? 'No todos found'}</p>)
-                .render()}
-            </div>
-          </div>
+          {/* Effect-only version - no atom-based features */}
         </CardContent>
       </Card>
     </div>
@@ -128,8 +103,9 @@ function TodosRoute() {
 }
 
 export const Route = createFileRoute('/todos-effect-only')({
+  ssr: false, // TODO: Make it work with SSR
   component: () => (
-    <ConfectProvider atomRuntime={atomRuntime}>
+    <ConfectProvider atomRuntime={runtime}>
       <TodosRoute />
     </ConfectProvider>
   ),
