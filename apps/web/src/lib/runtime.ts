@@ -15,3 +15,5 @@ export const MainLayer = Logger.pretty.pipe(
 )
 
 export const { runtime, makeAtomRuntime, atomRuntime } = makeAtomRuntimeLayer(MainLayer)
+
+makeAtomRuntime.addGlobalLayer(MainLayer)

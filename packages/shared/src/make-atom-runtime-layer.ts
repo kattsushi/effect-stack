@@ -1,13 +1,12 @@
 import { Atom } from '@effect-atom/atom-react'
-import * as Effect from 'effect/Effect'
-import * as Layer from 'effect/Layer'
+// import * as Effect from 'effect/Effect'
+import type * as Layer from 'effect/Layer'
 import * as ManagedRuntime from 'effect/ManagedRuntime'
 
 export const makeAtomRuntimeLayer = <R, E>(layer: Layer.Layer<R, E, never>) => {
-  const memoMap = Effect.runSync(Layer.makeMemoMap)
-  const makeAtomRuntime = Atom.context({ memoMap })
+  const makeAtomRuntime = Atom.context({ memoMap: Atom.defaultMemoMap })
   return {
-    runtime: ManagedRuntime.make(layer, memoMap),
+    runtime: ManagedRuntime.make(layer),
     makeAtomRuntime,
     atomRuntime: makeAtomRuntime(layer),
   }

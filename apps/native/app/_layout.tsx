@@ -4,6 +4,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import '../global.css'
+import { RegistryProvider } from '@effect-atom/atom-react'
 import React, { useRef } from 'react'
 import { Platform } from 'react-native'
 import { setAndroidNavigationBar } from '@/lib/android-navigation-bar'
@@ -55,15 +56,17 @@ export default function RootLayout() {
   }
   return (
     <ConvexProvider client={convex}>
-      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-        <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack>
-            <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ title: 'Modal', presentation: 'modal' }} />
-          </Stack>
-        </GestureHandlerRootView>
-      </ThemeProvider>
+      <RegistryProvider>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack>
+              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ title: 'Modal', presentation: 'modal' }} />
+            </Stack>
+          </GestureHandlerRootView>
+        </ThemeProvider>
+      </RegistryProvider>
     </ConvexProvider>
   )
 }

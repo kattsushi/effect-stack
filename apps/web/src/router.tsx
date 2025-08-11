@@ -6,6 +6,7 @@ import { routerWithQueryClient } from '@tanstack/react-router-with-query'
 import { ConvexProvider } from 'convex/react'
 import { routeTree } from './routeTree.gen'
 import './index.css'
+import { RegistryProvider } from '@effect-atom/atom-react'
 
 export function createRouter() {
   const CONVEX_URL = import.meta.env.VITE_CONVEX_URL
@@ -31,7 +32,11 @@ export function createRouter() {
       defaultPendingComponent: () => <Loader />,
       defaultNotFoundComponent: () => <div>Not Found</div>,
       context: { queryClient },
-      Wrap: ({ children }) => <ConvexProvider client={convexQueryClient.convexClient}>{children}</ConvexProvider>,
+      Wrap: ({ children }) => (
+        <ConvexProvider client={convexQueryClient.convexClient}>
+          <RegistryProvider>{children}</RegistryProvider>
+        </ConvexProvider>
+      ),
     }),
     queryClient,
   )
