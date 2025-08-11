@@ -138,6 +138,7 @@ function TodosRoute() {
 }
 
 export const Route = createFileRoute('/todos-effect-atom')({
+  ssr: false, // TODO: Make it work with SSR
   component: () => (
     <ConfectProvider atomRuntime={atomRuntime}>
       <TodosRoute />
