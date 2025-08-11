@@ -22,21 +22,14 @@ type InferFunctionReturnsHybrid<T, _F> = InferFunctionReturns<T>
 
 // Dynamic API overload for useQueryOption (same as useQuery but returning Option)
 export function useQueryOption<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<InferFunctionReturnsHybrid<ApiObject[M][F], F>>
+  fn: Fn,
+): (args: InferFunctionArgs<Fn>) => Option.Option<InferFunctionReturnsHybrid<Fn, F>>
 
 // Implementation that handles the API (same strategy as useQuery)
-export function useQueryOption(...args: any[]) {
-  // Extract arguments
-  const [apiObject, moduleName, functionName] = args
-  const fn = apiObject[moduleName][functionName]
-
+export function useQueryOption(fn: any) {
   return (actualArgs: any) => {
     // Use the existing Convex hook to get result
     const convexResult = useConvexQuery(fn, actualArgs)
@@ -54,21 +47,14 @@ export function useQueryOption(...args: any[]) {
 
 // Dynamic API overload (same as useQuery but returning Effect)
 export function useQuery<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>, never>
+  fn: Fn,
+): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never>
 
 // Implementation that handles the API (same strategy as useQuery)
-export function useQuery(...args: any[]) {
-  // Extract arguments
-  const [apiObject, moduleName, functionName] = args
-  const fn = apiObject[moduleName][functionName]
-
+export function useQuery(fn: any) {
   return (actualArgs: any) => {
     // Use the existing Convex hook to get result
     const convexResult = useConvexQuery(fn, actualArgs)
@@ -92,17 +78,12 @@ export function useQuery(...args: any[]) {
 
 // Implementation for mutations
 export function useMutation<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
-  Fn extends ApiObject[M][F]
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
+  fn: Fn,
 ): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
-  const fn = apiObject[moduleName][functionName]
-  const convexMutation = useConvexMutation(fn)
+  const convexMutation = useConvexMutation(fn as any)
 
   return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
     return Effect.tryPromise({
@@ -131,17 +112,12 @@ export function useMutation<
 
 // Implementation for actions
 export function useAction<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
-  Fn extends ApiObject[M][F]
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
+  fn: Fn,
 ): (args: InferFunctionArgs<Fn>) => Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> {
-  const fn = apiObject[moduleName][functionName]
-  const convexAction = useConvexAction(fn)
+  const convexAction = useConvexAction(fn as any)
 
   return (actualArgs: InferFunctionArgs<Fn>): Effect.Effect<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>, never> => {
     return Effect.tryPromise({

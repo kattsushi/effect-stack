@@ -21,10 +21,10 @@ function TodosScreen() {
   // ✅ No business logic, no atom creation
   // ✅ Better performance and memoization
 
-  const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
-  const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
-  const handleToggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
-  const handleDeleteTodo = useAtomSetConfect(api, 'functions', 'deleteTodo')
+  const todosResult = useAtomValueConfect(api.functions.listTodos, {})
+  const addTodo = useAtomSetConfect(api.functions.insertTodo)
+  const handleToggleTodo = useAtomSetConfectAction(api.functions.toggleTodo)
+  const handleDeleteTodo = useAtomSetConfect(api.functions.deleteTodo)
   const firstTodoResult = useAtomValue(getFirstTodoAtom)
   const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
 

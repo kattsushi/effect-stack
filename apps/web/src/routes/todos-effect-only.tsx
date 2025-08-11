@@ -17,16 +17,16 @@ import { runtime } from '@/lib/runtime'
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useState('')
 
-  const todosOption = useQueryOption(api, 'functions', 'listTodos')({})
-  const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
+  const todosOption = useQueryOption(api.functions.listTodos)({})
+  const addTodoEffect = useMutation(api.functions.insertTodo)
   const handleAddTodo = (text: string) =>
     addTodoEffect({ text })
       .pipe(Effect.orDie, runtime.runPromise)
       .then(() => setNewTodoText(''))
 
-  const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
+  const toggleTodoEffect = useAction(api.functions.toggleTodo)
   const handleToggleTodo = (id: Id<'todos'>) => toggleTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
-  const deleteTodoEffect = useMutation(api, 'functions', 'deleteTodo')
+  const deleteTodoEffect = useMutation(api.functions.deleteTodo)
   const handleDeleteTodo = (id: Id<'todos'>) => deleteTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
   // Removed atom-based first todo functionality for effect-only version
 
@@ -41,7 +41,7 @@ function TodosRoute() {
       <Card>
         <CardHeader>
           <CardTitle>Todo List</CardTitle>
-          <CardDescription>Manage your tasks efficiently with Effect atoms</CardDescription>
+          <CardDescription>Manage your tasks efficiently with Effect Only</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Add Todo Section */}

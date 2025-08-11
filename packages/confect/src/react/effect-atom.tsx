@@ -61,19 +61,16 @@ type InferFunctionReturnsHybrid<T, F> = F extends keyof import('./index').Confec
  * @returns The Result of the query
  */
 export function useAtomValueConfect<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-  args: InferFunctionArgs<ApiObject[M][F]>,
-): Result.Result<InferFunctionReturnsHybrid<ApiObject[M][F], F>, InferFunctionErrors<F>> {
+  fn: Fn,
+  args: InferFunctionArgs<Fn>,
+): Result.Result<InferFunctionReturnsHybrid<Fn, F>, InferFunctionErrors<F>> {
   const atomRuntime = useAtomRuntime()
 
   // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
-  const queryEffect = useQuery(apiObject, moduleName, functionName)(args)
+  const queryEffect = useQuery(fn)(args)
 
   const queryAtom = useMemo(() =>
     atomRuntime.atom(queryEffect),
@@ -93,24 +90,21 @@ export function useAtomValueConfect<
  * @returns A function to execute the mutation
  */
 export function useAtomSetConfect<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
+  fn: Fn,
+): (args: InferFunctionArgs<Fn>) => Promise<InferFunctionReturnsHybrid<Fn, F>> {
   const atomRuntime = useAtomRuntime()
 
   // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
-  const mutationEffect = useMutation(apiObject, moduleName, functionName)
+  const mutationEffect = useMutation(fn)
 
   const mutationAtom = useMemo(() =>
     atomRuntime.fn(
-      Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+      Effect.fn(function* (args: InferFunctionArgs<Fn>) {
         const mutationId = Math.random().toString(36).substring(2, 11)
-        const mutationKey = `${String(moduleName)}.${String(functionName)}`
+        const mutationKey = `mutation`
 
         yield* Effect.log(`🎯 [${mutationKey}] 🚀 STARTING mutation #${mutationId}`)
 
@@ -138,24 +132,21 @@ export function useAtomSetConfect<
  * @returns A function to execute the action
  */
 export function useAtomSetConfectAction<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
+  F extends string = string,
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturnsHybrid<ApiObject[M][F], F>> {
+  fn: Fn,
+): (args: InferFunctionArgs<Fn>) => Promise<InferFunctionReturnsHybrid<Fn, F>> {
   const atomRuntime = useAtomRuntime()
 
   // 🎯 SOLUCIÓN: Hook en el nivel superior, luego memoizar el atom
-  const actionEffect = useAction(apiObject, moduleName, functionName)
+  const actionEffect = useAction(fn)
 
   const actionAtom = useMemo(() =>
     atomRuntime.fn(
-      Effect.fn(function* (args: InferFunctionArgs<ApiObject[M][F]>) {
+      Effect.fn(function* (args: InferFunctionArgs<Fn>) {
         const actionId = Math.random().toString(36).substring(2, 11)
-        const actionKey = `${String(moduleName)}.${String(functionName)}`
+        const actionKey = `action`
 
         yield* Effect.log(`⚡ [${actionKey}] 🚀 STARTING action #${actionId}`)
 
@@ -184,17 +175,13 @@ export function useAtomSetConfectAction<
  * @returns [value, setter] tuple
  */
 export function useAtomConfect<
-  ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
-  F extends keyof ApiObject[M] & string,
+  Fn extends { _args: any; _returnType: any },
 >(
-  apiObject: ApiObject,
-  moduleName: M,
-  functionName: F,
-  args: InferFunctionArgs<ApiObject[M][F]>,
+  fn: Fn,
+  args: InferFunctionArgs<Fn>,
 ) {
-  const value = useAtomValueConfect(apiObject, moduleName, functionName, args)
-  const setter = useAtomSetConfect(apiObject, moduleName, functionName)
+  const value = useAtomValueConfect(fn, args)
+  const setter = useAtomSetConfect(fn)
 
   return [value, setter] as const
 }
