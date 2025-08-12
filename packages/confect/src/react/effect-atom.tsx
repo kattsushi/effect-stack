@@ -3,12 +3,31 @@ import { Result } from '@effect-atom/atom'
 import * as Effect from 'effect/Effect'
 import React, { createContext, useContext, useMemo } from 'react'
 import { useQuery, useMutation, useAction } from './index'
+import type {
+  InferFunctionErrors,
+  InferFunctionArgs,
+  InferFunctionReturns
+} from './types'
 
-// Context for atom runtime
+export type { ConfectErrorTypes } from './types'
+
 const ConfectContext = createContext<any>(null)
 
 /**
- * Provider component for Confect hooks
+ * Provider component that provides atom runtime context for Confect hooks.
+ *
+ * @example
+ * ```tsx
+ * import { atomRuntime } from '@/lib/runtime'
+ *
+ * function App() {
+ *   return (
+ *     <ConfectProvider atomRuntime={atomRuntime}>
+ *       <TodosComponent />
+ *     </ConfectProvider>
+ *   )
+ * }
+ * ```
  */
 export function ConfectProvider({
   children,
@@ -24,9 +43,6 @@ export function ConfectProvider({
   )
 }
 
-/**
- * Hook to get the atom runtime from context
- */
 function useAtomRuntime() {
   const atomRuntime = useContext(ConfectContext)
   if (!atomRuntime) {
@@ -35,26 +51,36 @@ function useAtomRuntime() {
   return atomRuntime
 }
 
-// Import shared type utilities
-import type {
-  InferFunctionErrors,
-  InferFunctionArgs,
-  InferFunctionReturns
-} from './types'
-
-// Re-export for backward compatibility
-export type { ConfectErrorTypes } from './types'
-
 
 
 /**
- * Hook for creating a memoized query atom that wraps the existing useQuery hook
+ * Hook for reactive queries using effect-atom. Returns a Result that automatically
+ * updates when the query data changes.
  *
- * @param apiObject - The generated API object
- * @param moduleName - The module name (e.g., 'functions')
- * @param functionName - The function name (e.g., 'listTodos')
- * @param args - The arguments for the query
- * @returns The Result of the query
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useAtomValueConfect } from '@monorepo/confect/react/effect-atom'
+ * import { Result } from '@effect-atom/atom-react'
+ *
+ * function TodosList() {
+ *   const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
+ *
+ *   return (
+ *     <div>
+ *       {Result.builder(todosResult)
+ *         .onWaiting(() => <div>Loading...</div>)
+ *         .onSuccess((todos) => (
+ *           <ul>
+ *             {todos.map(todo => <li key={todo._id}>{todo.text}</li>)}
+ *           </ul>
+ *         ))
+ *         .onFailure(() => <div>Error loading todos</div>)
+ *         .render()}
+ *     </div>
+ *   )
+ * }
+ * ```
  */
 export function useAtomValueConfect<
   ApiObject extends Record<string, any>,
@@ -67,8 +93,6 @@ export function useAtomValueConfect<
   args: InferFunctionArgs<ApiObject[M][F]>,
 ): Result.Result<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F>> {
   const atomRuntime = useAtomRuntime()
-
-  // 🎯 SOLUCIÓN: Hook en el nivel superior con tu API elegante
   const queryEffect = useQuery(apiObject, moduleName, functionName)(args)
 
   const queryAtom = useMemo(() =>
@@ -76,17 +100,39 @@ export function useAtomValueConfect<
     [queryEffect, atomRuntime]
   )
 
-  // Usar useAtomValue para obtener el Result
   return useAtomValue(queryAtom)
 }
 
 /**
- * Hook for creating a memoized mutation atom that wraps the existing useMutation hook
+ * Hook for mutations using effect-atom. Returns a function that executes
+ * the mutation and returns a Promise.
  *
- * @param apiObject - The generated API object
- * @param moduleName - The module name (e.g., 'functions')
- * @param functionName - The function name (e.g., 'insertTodo')
- * @returns A function to execute the mutation
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useAtomSetConfect } from '@monorepo/confect/react/effect-atom'
+ *
+ * function AddTodoForm() {
+ *   const [text, setText] = useState('')
+ *   const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
+ *
+ *   const handleSubmit = async () => {
+ *     try {
+ *       await addTodo({ text })
+ *       setText('')
+ *     } catch (error) {
+ *       console.error('Failed to add todo:', error)
+ *     }
+ *   }
+ *
+ *   return (
+ *     <form onSubmit={handleSubmit}>
+ *       <input value={text} onChange={(e) => setText(e.target.value)} />
+ *       <button type="submit">Add Todo</button>
+ *     </form>
+ *   )
+ * }
+ * ```
  */
 export function useAtomSetConfect<
   ApiObject extends Record<string, any>,
@@ -98,8 +144,6 @@ export function useAtomSetConfect<
   functionName: F,
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturns<ApiObject[M][F]>> {
   const atomRuntime = useAtomRuntime()
-
-  // 🎯 SOLUCIÓN: Hook en el nivel superior con tu API elegante
   const mutationEffect = useMutation(apiObject, moduleName, functionName)
 
   const mutationAtom = useMemo(() =>
@@ -108,12 +152,9 @@ export function useAtomSetConfect<
         const mutationId = Math.random().toString(36).substring(2, 11)
         const mutationKey = `mutation`
 
-        yield* Effect.log(`🎯 [${mutationKey}] 🚀 STARTING mutation #${mutationId}`)
-
-        // Ejecutar el Effect del hook existente
+        yield* Effect.log(`[${mutationKey}] Starting mutation #${mutationId}`)
         const result = yield* mutationEffect(args)
-
-        yield* Effect.log(`🎯 [${mutationKey}] ✅ COMPLETED mutation #${mutationId}`)
+        yield* Effect.log(`[${mutationKey}] Completed mutation #${mutationId}`)
 
         return result
       }),
@@ -121,17 +162,41 @@ export function useAtomSetConfect<
     [mutationEffect, atomRuntime]
   )
 
-  // Usar useAtomSet para obtener la función de mutation
   return useAtomSet(mutationAtom, { mode: 'promise' } as any) as any
 }
 
 /**
- * Hook for creating a memoized action atom that wraps the existing useAction hook
+ * Hook for actions using effect-atom. Returns a function that executes
+ * the action and returns a Promise.
  *
- * @param apiObject - The generated API object
- * @param moduleName - The module name (e.g., 'functions')
- * @param functionName - The function name (e.g., 'toggleTodo')
- * @returns A function to execute the action
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useAtomSetConfectAction } from '@monorepo/confect/react/effect-atom'
+ *
+ * function TodoItem({ todo }) {
+ *   const toggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
+ *
+ *   const handleToggle = async () => {
+ *     try {
+ *       await toggleTodo({ id: todo._id })
+ *     } catch (error) {
+ *       console.error('Failed to toggle todo:', error)
+ *     }
+ *   }
+ *
+ *   return (
+ *     <div>
+ *       <input
+ *         type="checkbox"
+ *         checked={todo.completed}
+ *         onChange={handleToggle}
+ *       />
+ *       {todo.text}
+ *     </div>
+ *   )
+ * }
+ * ```
  */
 export function useAtomSetConfectAction<
   ApiObject extends Record<string, any>,
@@ -143,8 +208,6 @@ export function useAtomSetConfectAction<
   functionName: F,
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Promise<InferFunctionReturns<ApiObject[M][F]>> {
   const atomRuntime = useAtomRuntime()
-
-  // 🎯 SOLUCIÓN: Hook en el nivel superior con tu API elegante
   const actionEffect = useAction(apiObject, moduleName, functionName)
 
   const actionAtom = useMemo(() =>
@@ -153,12 +216,9 @@ export function useAtomSetConfectAction<
         const actionId = Math.random().toString(36).substring(2, 11)
         const actionKey = `action`
 
-        yield* Effect.log(`⚡ [${actionKey}] 🚀 STARTING action #${actionId}`)
-
-        // Ejecutar el Effect del hook existente
+        yield* Effect.log(`[${actionKey}] Starting action #${actionId}`)
         const result = yield* actionEffect(args)
-
-        yield* Effect.log(`⚡ [${actionKey}] ✅ COMPLETED action #${actionId}`)
+        yield* Effect.log(`[${actionKey}] Completed action #${actionId}`)
 
         return result
       }),
@@ -166,18 +226,40 @@ export function useAtomSetConfectAction<
     [actionEffect, atomRuntime]
   )
 
-  // Usar useAtomSet para obtener la función de action
   return useAtomSet(actionAtom, { mode: 'promise' } as any) as any
 }
 
 /**
- * Hook for creating a memoized atom and getting both value and setter
+ * Hook that combines query and mutation functionality. Returns both the
+ * reactive query result and a mutation function.
  *
- * @param apiObject - The generated API object
- * @param moduleName - The module name (e.g., 'functions')
- * @param functionName - The function name (e.g., 'insertTodo')
- * @param args - The arguments for the query (for queries only)
- * @returns [value, setter] tuple
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useAtomConfect } from '@monorepo/confect/react/effect-atom'
+ * import { Result } from '@effect-atom/atom-react'
+ *
+ * function TodosWithAdd() {
+ *   const [todosResult, addTodo] = useAtomConfect(api, 'functions', 'listTodos', {})
+ *
+ *   const handleAdd = async (text: string) => {
+ *     await addTodo({ text })
+ *   }
+ *
+ *   return (
+ *     <div>
+ *       {Result.builder(todosResult)
+ *         .onSuccess((todos) => (
+ *           <div>
+ *             {todos.map(todo => <div key={todo._id}>{todo.text}</div>)}
+ *             <button onClick={() => handleAdd('New todo')}>Add Todo</button>
+ *           </div>
+ *         ))
+ *         .render()}
+ *     </div>
+ *   )
+ * }
+ * ```
  */
 export function useAtomConfect<
   ApiObject extends Record<string, any>,

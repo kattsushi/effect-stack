@@ -1,24 +1,40 @@
 import { useConvexQuery, useConvexAction, useConvexMutation } from "@convex-dev/react-query";
-import type { FunctionReference } from "convex/server";
-import React, { createContext, useContext } from 'react'
-
 import { Effect } from 'effect'
 import * as Option from 'effect/Option'
-
-// Import shared type utilities
 import type {
-  ConfectErrorTypes,
   InferFunctionErrors,
   InferFunctionArgs,
   InferFunctionReturns
 } from './types'
 
-// Re-export for backward compatibility
 export type { ConfectErrorTypes } from './types'
 
-
-
-// Dynamic API overload for useQuery
+/**
+ * Hook for reactive queries that return Effect. Use this for data fetching
+ * operations that need reactive updates and Effect-based error handling.
+ *
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useQuery } from '@monorepo/confect/react'
+ * import { Effect } from 'effect'
+ * import { runtime } from '@/lib/runtime'
+ *
+ * function TodosList() {
+ *   const [todos, setTodos] = useState([])
+ *   const todosEffect = useQuery(api, 'functions', 'listTodos')({})
+ *
+ *   useEffect(() => {
+ *     const program = todosEffect.pipe(
+ *       Effect.catchAll(error => Effect.log(`Failed: ${error}`))
+ *     )
+ *     runtime.runPromise(program).then(setTodos)
+ *   }, [todosEffect])
+ *
+ *   return <div>{todos.map(todo => <div key={todo._id}>{todo.text}</div>)}</div>
+ * }
+ * ```
+ */
 export function useQuery<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
@@ -33,37 +49,27 @@ export function useQuery<
   never
 >
 
-// Implementation that handles the API
 export function useQuery(...args: any[]) {
-  // Extract arguments
   const [apiObject, moduleName, functionName] = args
   const fn = apiObject[moduleName][functionName]
 
   return (actualArgs: any) => {
-    // Wrap useConvexQuery in a try-catch to handle synchronous errors
     try {
-      // Use the existing Convex hook to get result
       const convexResult = useConvexQuery(fn as any, actualArgs)
 
-      // Transform result to Effect
       if (convexResult === undefined) {
-        // Still loading - return never-resolving effect
         return Effect.never
       }
 
-      // Check if the result is an error (multiple formats)
       if (convexResult && typeof convexResult === 'object') {
-        // Format 1: __convexError (existing)
         if ('__convexError' in convexResult) {
           return Effect.fail((convexResult as any).__convexError)
         }
 
-        // Format 2: ConvexError object directly
         if ('_tag' in convexResult && 'message' in convexResult) {
           return Effect.fail(convexResult)
         }
 
-        // Format 3: Error object with ConvexError message
         if ('message' in convexResult) {
           const message = (convexResult as any).message
           if (typeof message === 'string' && message.includes('ConvexError:')) {
@@ -81,33 +87,25 @@ export function useQuery(...args: any[]) {
           }
         }
 
-        // Format 4: Check if this is a TanStack Query result object with error
         if ('error' in convexResult && convexResult.error) {
           const error = (convexResult as any).error
-          // Handle ConvexError from TanStack Query
           if (error && typeof error === 'object' && 'data' in error) {
             return Effect.fail(error.data)
           }
           return Effect.fail(error)
         }
 
-        // Format 5: Check if this is a TanStack Query result object with data
         if ('data' in convexResult) {
           const data = (convexResult as any).data
           if (data === undefined) {
-            // Still loading
             return Effect.never
           }
           return Effect.succeed(data)
         }
       }
 
-      // Success case - return as-is to preserve types
       return Effect.succeed(convexResult)
     } catch (error) {
-      // Handle synchronous errors from useConvexQuery
-
-      // Parse ConvexError from the caught error
       if (error && typeof error === 'object' && 'message' in error) {
         const message = (error as any).message
         if (typeof message === 'string' && message.includes('ConvexError:')) {
@@ -125,13 +123,46 @@ export function useQuery(...args: any[]) {
         }
       }
 
-      // Fallback: return raw error
       return Effect.fail(error as any)
     }
   }
 }
 
-// Dynamic API overload for useMutation
+/**
+ * Hook for mutations that return Effect. Use this for data modification
+ * operations that need Effect-based error handling and composition.
+ *
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useMutation } from '@monorepo/confect/react'
+ * import { Effect } from 'effect'
+ * import { runtime } from '@/lib/runtime'
+ *
+ * function AddTodoForm() {
+ *   const [text, setText] = useState('')
+ *   const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
+ *
+ *   const handleSubmit = () => {
+ *     const program = addTodoEffect({ text }).pipe(
+ *       Effect.catchTags({
+ *         ValidationError: () => Effect.log('Invalid input'),
+ *         NetworkError: () => Effect.log('Network failed')
+ *       }),
+ *       Effect.tap(() => Effect.sync(() => setText('')))
+ *     )
+ *     runtime.runPromise(program)
+ *   }
+ *
+ *   return (
+ *     <form onSubmit={handleSubmit}>
+ *       <input value={text} onChange={(e) => setText(e.target.value)} />
+ *       <button type="submit">Add Todo</button>
+ *     </form>
+ *   )
+ * }
+ * ```
+ */
 export function useMutation<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
@@ -142,9 +173,7 @@ export function useMutation<
   functionName: F,
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F>, never>
 
-// Implementation that handles the API
 export function useMutation(...args: any[]) {
-  // Extract arguments
   const [apiObject, moduleName, functionName] = args
   const fn = apiObject[moduleName][functionName]
   const convexMutation = useConvexMutation(fn as any)
@@ -153,7 +182,6 @@ export function useMutation(...args: any[]) {
     Effect.tryPromise({
       try: () => convexMutation(actualArgs),
       catch: (error) => {
-        // Best-effort: return parsed ConvexError payload if available, else raw error
         if (error && typeof error === 'object' && 'message' in error) {
           const message = (error as any).message
 
@@ -163,7 +191,6 @@ export function useMutation(...args: any[]) {
               try {
                 const parsed = JSON.parse(jsonMatch[1])
 
-                // Ensure the parsed error has the correct structure for Effect's catchTags
                 if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
                   return parsed
                 } else {
@@ -181,7 +208,42 @@ export function useMutation(...args: any[]) {
     })
 }
 
-// Dynamic API overload for useAction
+/**
+ * Hook for actions that return Effect. Use this for operations that need
+ * to run in the background without blocking the UI.
+ *
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useAction } from '@monorepo/confect/react'
+ * import { Effect } from 'effect'
+ * import { runtime } from '@/lib/runtime'
+ *
+ * function TodoItem({ todo }) {
+ *   const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
+ *
+ *   const handleToggle = () => {
+ *     const program = toggleTodoEffect({ id: todo._id }).pipe(
+ *       Effect.catchAll(error =>
+ *         Effect.log(`Failed to toggle todo: ${error}`)
+ *       )
+ *     )
+ *     runtime.runPromise(program)
+ *   }
+ *
+ *   return (
+ *     <div>
+ *       <input
+ *         type="checkbox"
+ *         checked={todo.completed}
+ *         onChange={handleToggle}
+ *       />
+ *       {todo.text}
+ *     </div>
+ *   )
+ * }
+ * ```
+ */
 export function useAction<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,
@@ -219,7 +281,38 @@ export function useAction(...args: any[]) {
     })
 }
 
-// Dynamic API overload for useQueryOption (returns Option with error and loading state)
+/**
+ * Hook for queries that return Option with loading and error states.
+ * Use this when you need simple reactive queries without Effect composition.
+ *
+ * @example
+ * ```tsx
+ * import { api } from '@/convex/_generated/api'
+ * import { useQueryOption } from '@monorepo/confect/react'
+ * import * as Option from 'effect/Option'
+ *
+ * function TodosList() {
+ *   const todosQuery = useQueryOption(api, 'functions', 'listTodos')({})
+ *
+ *   if (todosQuery.loading) {
+ *     return <div>Loading...</div>
+ *   }
+ *
+ *   if (todosQuery.error) {
+ *     return <div>Error loading todos</div>
+ *   }
+ *
+ *   return Option.match(todosQuery.data, {
+ *     onNone: () => <div>No todos found</div>,
+ *     onSome: (todos) => (
+ *       <ul>
+ *         {todos.map(todo => <li key={todo._id}>{todo.text}</li>)}
+ *       </ul>
+ *     )
+ *   })
+ * }
+ * ```
+ */
 export function useQueryOption<
   ApiObject extends Record<string, any>,
   M extends keyof ApiObject,

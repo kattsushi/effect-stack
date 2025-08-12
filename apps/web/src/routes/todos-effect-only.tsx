@@ -51,7 +51,6 @@ function TodosRoute() {
       Effect.orDie,
       runtime.runPromise,
     )
-  // Removed atom-based first todo functionality for effect-only version
 
   const handleDeleteTodoWithConfirm = (id: Id<'todos'>) => {
     if (typeof window !== 'undefined' && window.confirm('Are you sure you want to delete this todo?')) {
@@ -67,7 +66,6 @@ function TodosRoute() {
           <CardDescription>Manage your tasks efficiently with Effect Only</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Add Todo Section */}
           <div className="flex gap-2">
             <Input
               className="flex-1"
@@ -80,7 +78,6 @@ function TodosRoute() {
             </Button>
           </div>
 
-          {/* Todos List */}
           <div className="space-y-2">
             {(() => {
               if (todosQuery.loading) {
@@ -135,8 +132,6 @@ function TodosRoute() {
               })
             })()}
           </div>
-
-          {/* Effect-only version - no atom-based features */}
         </CardContent>
       </Card>
     </div>
@@ -144,6 +139,6 @@ function TodosRoute() {
 }
 
 export const Route = createFileRoute('/todos-effect-only')({
-  ssr: false, // TODO: Make it work with SSR
+  ssr: false,
   component: TodosRoute,
 })
