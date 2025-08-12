@@ -13,6 +13,7 @@ import {
   type RegisteredMutation,
   type RegisteredQuery,
 } from 'convex/server'
+import { ConvexError } from 'convex/values'
 import { Effect, Layer, pipe, Schema } from 'effect'
 
 import { ConfectAuth } from './auth'
@@ -37,6 +38,30 @@ import type { ConfectDataModelFromConfectSchema, ConfectSchemaDefinition, Generi
 import { compileArgsSchema, compileReturnsSchema } from './schema_to_validator'
 import { ConfectStorageActionWriter, ConfectStorageReader, ConfectStorageWriter } from './storage'
 import { type ConfectVectorSearch, confectVectorSearchLayer } from './vector_search'
+
+/**
+ * Utility function to handle Effect errors and convert them to ConvexError
+ * This ensures that Effect errors are properly serialized and can be caught by the frontend
+ */
+const handleEffectError = (error: unknown): never => {
+  // Check if it's a tagged error from Effect Schema
+  if (error && typeof error === 'object' && '_tag' in error) {
+    const taggedError = error as { _tag: string; message?: string }
+
+    // Create ConvexError with the tagged error data
+    const convexErrorData = {
+      _tag: taggedError._tag,
+      message: taggedError.message || 'Unknown error'
+    }
+    throw new ConvexError(convexErrorData)
+  }
+
+  // For non-tagged errors, wrap them as generic errors
+  throw new ConvexError({
+    _tag: 'UnknownError',
+    message: error instanceof Error ? error.message : 'Unknown error occurred'
+  })
+}
 
 export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>(
   confectSchemaDefinition: ConfectSchemaDefinition<ConfectSchema>,
@@ -165,6 +190,7 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
           ),
         ),
         Effect.andThen((convexReturns) => Schema.encodeUnknown(returns)(convexReturns)),
+        Effect.catchAll((error) => Effect.sync(() => handleEffectError(error))),
         Effect.runPromise,
       ),
   })
@@ -305,6 +331,7 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
           ),
         ),
         Effect.andThen((convexReturns) => Schema.encodeUnknown(returns)(convexReturns)),
+        Effect.catchAll((error) => Effect.sync(() => handleEffectError(error))),
         Effect.runPromise,
       ),
   })
@@ -449,6 +476,7 @@ export const makeConfectFunctions = <ConfectSchema extends GenericConfectSchema>
           ),
         ),
         Effect.andThen((convexReturns) => Schema.encodeUnknown(returns)(convexReturns)),
+        Effect.catchAll((error) => Effect.sync(() => handleEffectError(error))),
         Effect.runPromise,
       ),
   })

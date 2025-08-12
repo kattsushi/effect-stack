@@ -122,6 +122,8 @@ function TodosRoute() {
             <div className="mt-2">
               {Result.builder(firstTodoResult)
                 .onInitial(() => <p className="text-muted-foreground text-sm">Initial state (not waiting)</p>)
+                .onFailure(() => <p className="text-destructive text-sm">Failed to load first todo</p>)
+                .onDefect(() => <p className="text-destructive text-sm">Failed to load first todo defect</p>)
                 .onWaiting(() => <p className="text-muted-foreground text-sm">Loading...</p>)
                 .onSuccess((data) => <p className="text-foreground text-sm">{data?.text ?? 'No todos found'}</p>)
                 .render()}

@@ -1,5 +1,5 @@
 import { useAtomValue, useAtomSet } from '@effect-atom/atom-react'
-import type { Result } from '@effect-atom/atom'
+import { Result } from '@effect-atom/atom'
 import * as Effect from 'effect/Effect'
 import React, { createContext, useContext, useMemo } from 'react'
 import { useQuery, useMutation, useAction } from './index'

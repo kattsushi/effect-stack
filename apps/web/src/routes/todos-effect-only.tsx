@@ -16,17 +16,41 @@ import { runtime } from '@/lib/runtime'
 function TodosRoute() {
   const [newTodoText, setNewTodoText] = useState('')
 
-  const todosOption = useQueryOption(api, 'functions', 'listTodos')({})
+  const todosQuery = useQueryOption(api, 'functions', 'listTodos')({})
   const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
   const handleAddTodo = (text: string) =>
     addTodoEffect({ text })
-      .pipe(Effect.orDie, runtime.runPromise)
+      .pipe(
+        Effect.catchTags({
+          NotFoundError: () => Effect.log('Failed to insert todo - not found'),
+        }),
+        Effect.catchAll((error) => Effect.log(`Failed to insert todo: ${JSON.stringify(error)}`)),
+        Effect.orDie,
+        runtime.runPromise,
+      )
       .then(() => setNewTodoText(''))
 
   const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
-  const handleToggleTodo = (id: Id<'todos'>) => toggleTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+  const handleToggleTodo = (id: Id<'todos'>) =>
+    toggleTodoEffect({ id }).pipe(
+      Effect.catchTags({
+        NotFoundError: () => Effect.log('Failed to toggle todo - not found'),
+      }),
+      Effect.catchAll((error) => Effect.log(`Failed to toggle todo: ${JSON.stringify(error)}`)),
+      Effect.orDie,
+      runtime.runPromise,
+    )
+
   const deleteTodoEffect = useMutation(api, 'functions', 'deleteTodo')
-  const handleDeleteTodo = (id: Id<'todos'>) => deleteTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+  const handleDeleteTodo = (id: Id<'todos'>) =>
+    deleteTodoEffect({ id }).pipe(
+      Effect.catchTags({
+        NotFoundError: () => Effect.log('Failed to delete todo - not found'),
+      }),
+      Effect.catchAll((error) => Effect.log(`Failed to delete todo: ${JSON.stringify(error)}`)),
+      Effect.orDie,
+      runtime.runPromise,
+    )
   // Removed atom-based first todo functionality for effect-only version
 
   const handleDeleteTodoWithConfirm = (id: Id<'todos'>) => {
@@ -58,17 +82,34 @@ function TodosRoute() {
 
           {/* Todos List */}
           <div className="space-y-2">
-            {Option.match(todosOption, {
-              onNone: () => (
-                <div className="flex justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-                </div>
-              ),
-              onSome: (todosData) =>
-                Array.isEmptyReadonlyArray(todosData) ? (
-                  <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>
-                ) : (
-                  todosData.map((todo) => (
+            {(() => {
+              if (todosQuery.loading) {
+                return (
+                  <div className="flex justify-center py-8">
+                    <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
+                  </div>
+                )
+              }
+
+              if (todosQuery.error) {
+                return (
+                  <div className="py-8 text-center">
+                    <p className="mb-4 text-destructive">Error loading todos</p>
+                    <Button onClick={() => window.location.reload()} variant="outline">
+                      Refresh
+                    </Button>
+                  </div>
+                )
+              }
+
+              return Option.match(todosQuery.data, {
+                onNone: () => <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>,
+                onSome: (todosData) => {
+                  if (Array.isEmptyReadonlyArray(todosData)) {
+                    return <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>
+                  }
+
+                  return todosData.map((todo) => (
                     <div className="flex items-center justify-between rounded-lg border bg-card p-3" key={todo._id}>
                       <div className="flex flex-1 items-center gap-3">
                         <Checkbox checked={todo.completed} onCheckedChange={() => handleToggleTodo(todo._id)} />
@@ -90,8 +131,9 @@ function TodosRoute() {
                       </Button>
                     </div>
                   ))
-                ),
-            })}
+                },
+              })
+            })()}
           </div>
 
           {/* Effect-only version - no atom-based features */}

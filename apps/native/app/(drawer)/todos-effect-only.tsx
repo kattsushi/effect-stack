@@ -24,7 +24,14 @@ function TodosScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          deleteTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+          deleteTodoEffect({ id }).pipe(
+            Effect.catchTags({
+              NotFoundError: () => Effect.log('Failed to delete todo - not found'),
+            }),
+            Effect.catchAll((error) => Effect.log(`Failed to delete todo: ${JSON.stringify(error)}`)),
+            Effect.orDie,
+            runtime.runPromise,
+          )
         },
       },
     ])
@@ -33,13 +40,50 @@ function TodosScreen() {
   const handleAddTodo = () => {
     if (newTodoText.trim()) {
       addTodoEffect({ text: newTodoText.trim() })
-        .pipe(Effect.orDie, runtime.runPromise)
+        .pipe(
+          Effect.catchTags({
+            NotFoundError: () => Effect.log('Failed to insert todo - not found'),
+          }),
+          Effect.catchAll((error) => Effect.log(`Failed to insert todo: ${JSON.stringify(error)}`)),
+          Effect.orDie,
+          runtime.runPromise,
+        )
         .then(() => setNewTodoText(''))
     }
   }
 
   const handleToggleTodo = (id: Id<'todos'>) => {
-    toggleTodoEffect({ id }).pipe(Effect.orDie, runtime.runPromise)
+    toggleTodoEffect({ id }).pipe(
+      Effect.catchTags({
+        NotFoundError: () => Effect.log('Failed to toggle todo - not found'),
+      }),
+      Effect.catchAll((error) => Effect.log(`Failed to toggle todo: ${JSON.stringify(error)}`)),
+      Effect.orDie,
+      runtime.runPromise,
+    )
+  }
+
+  if (todosOption.error) {
+    return (
+      <Container>
+        <ScrollView className="flex-1">
+          <View className="px-4 py-6">
+            <Text className="text-red-500">Error loading todos</Text>
+          </View>
+        </ScrollView>
+      </Container>
+    )
+  }
+  if (todosOption.loading) {
+    return (
+      <Container>
+        <ScrollView className="flex-1">
+          <View className="px-4 py-6">
+            <ActivityIndicator color="#3b82f6" size="large" />
+          </View>
+        </ScrollView>
+      </Container>
+    )
   }
 
   return (
@@ -71,7 +115,7 @@ function TodosScreen() {
             </View>
 
             <View className="space-y-2">
-              {Option.match(todosOption, {
+              {Option.match(todosOption.data, {
                 onNone: () => (
                   <View className="flex justify-center py-8">
                     <ActivityIndicator color="#3b82f6" size="large" />
