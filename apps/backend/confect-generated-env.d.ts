@@ -8,22 +8,22 @@ import type { NotFoundError } from './convex/functions.js'
 // Module augmentation for main react module
 declare module '@monorepo/confect/react' {
   interface ConfectErrorTypes {
-    insertTodo: NotFoundError
-    listTodos: NotFoundError
-    deleteTodo: NotFoundError
-    toggleTodo: NotFoundError
-    getFirst: NotFoundError
+    "functions.insertTodo": NotFoundError
+    "functions.listTodos": NotFoundError
+    "functions.deleteTodo": NotFoundError
+    "functions.toggleTodo": NotFoundError
+    "functions.getFirst": NotFoundError
   }
 }
 
 // Module augmentation for effect-atom module
 declare module '@monorepo/confect/react/effect-atom' {
   interface ConfectErrorTypes {
-    insertTodo: NotFoundError
-    listTodos: NotFoundError
-    deleteTodo: NotFoundError
-    toggleTodo: NotFoundError
-    getFirst: NotFoundError
+    "functions.insertTodo": NotFoundError
+    "functions.listTodos": NotFoundError
+    "functions.deleteTodo": NotFoundError
+    "functions.toggleTodo": NotFoundError
+    "functions.getFirst": NotFoundError
   }
 }
 
@@ -31,11 +31,11 @@ declare module '@monorepo/confect/react/effect-atom' {
 export {}
 
 // Helper types for individual functions
-export type InsertTodoErrors = NotFoundError
-export type ListTodosErrors = NotFoundError
-export type DeleteTodoErrors = NotFoundError
-export type ToggleTodoErrors = NotFoundError
-export type GetFirstErrors = NotFoundError
+export type FunctionsInsertTodoErrors = NotFoundError
+export type FunctionsListTodosErrors = NotFoundError
+export type FunctionsDeleteTodoErrors = NotFoundError
+export type FunctionsToggleTodoErrors = NotFoundError
+export type FunctionsGetFirstErrors = NotFoundError
 
 // Auto-load this module when @monorepo/confect/react/effect is imported
 declare global {

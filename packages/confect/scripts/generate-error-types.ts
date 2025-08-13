@@ -10,6 +10,8 @@ interface ExtractedFunction {
   errorSchema: string | null
   returnsSchema: string | null
   filePath: string
+  moduleName: string  // Module name derived from file path (e.g., "functions", "admin/functions")
+  fullKey: string     // Full key for namespacing (e.g., "functions.insertTodo", "admin/functions.insertTodo")
   errorTypes: Set<string>
 }
 
@@ -194,6 +196,24 @@ export class ConfectTypeExtractor {
   }
 
   /**
+   * Generate module name and full key from file path
+   */
+  private generateModuleInfo(filePath: string, functionName: string): { moduleName: string, fullKey: string } {
+    const relativePath = path.relative(this.convexDir, filePath)
+
+    // Remove .ts extension and normalize path separators
+    const modulePathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/')
+
+    // Generate module name (e.g., "functions", "admin/functions", "user/auth")
+    const moduleName = modulePathWithoutExt
+
+    // Generate full key for namespacing (e.g., "functions.insertTodo", "admin/functions.insertTodo")
+    const fullKey = `${moduleName}.${functionName}`
+
+    return { moduleName, fullKey }
+  }
+
+  /**
    * Check if a node has export modifier
    */
   private hasExportModifier(node: ts.VariableStatement): boolean {
@@ -221,6 +241,7 @@ export class ConfectTypeExtractor {
         if (confectInfo) {
           const errorTypes = this.extractErrorTypes(confectInfo.errorSchema)
           const relativePath = path.relative(this.convexDir, filePath)
+          const { moduleName, fullKey } = this.generateModuleInfo(filePath, functionName)
 
           this.result.functions.push({
             name: functionName,
@@ -228,6 +249,8 @@ export class ConfectTypeExtractor {
             errorSchema: confectInfo.errorSchema,
             returnsSchema: confectInfo.returnsSchema,
             filePath: relativePath,
+            moduleName,
+            fullKey,
             errorTypes
           })
         }
@@ -776,12 +799,15 @@ export {}
    * Generate module augmentation for Confect (both modules)
    */
   private generateModuleAugmentation(): string {
-    // Generate interface content once
+    // Generate interface content with only namespaced keys
     let interfaceContent = ''
+
     for (const func of this.functions) {
       if (func.errorSchema) {
         const typeDefinition = this.convertSchemaToType(func.errorSchema)
-        interfaceContent += `    ${func.name}: ${typeDefinition}\n`
+
+        // Add namespaced key only - always add with quotes for complex keys
+        interfaceContent += `    "${func.fullKey}": ${typeDefinition}\n`
       }
     }
 
@@ -813,12 +839,27 @@ ${interfaceContent}  }
     for (const func of this.functions) {
       if (func.errorSchema) {
         const typeDefinition = this.convertSchemaToType(func.errorSchema)
-        const typeName = this.capitalize(func.name) + 'Errors'
-        content += `export type ${typeName} = ${typeDefinition}\n`
+
+        // Generate namespaced helper type only
+        const namespacedTypeName = this.generateNamespacedTypeName(func.moduleName, func.name) + 'Errors'
+        content += `export type ${namespacedTypeName} = ${typeDefinition}\n`
       }
     }
 
     return content
+  }
+
+  /**
+   * Generate a valid TypeScript type name from module name and function name
+   */
+  private generateNamespacedTypeName(moduleName: string, functionName: string): string {
+    // Convert module path to PascalCase (e.g., "admin/functions" -> "AdminFunctions")
+    const moduleNamePascal = moduleName
+      .split('/')
+      .map(part => this.capitalize(part))
+      .join('')
+
+    return moduleNamePascal + this.capitalize(functionName)
   }
 
   /**

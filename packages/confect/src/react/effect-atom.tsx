@@ -4,7 +4,7 @@ import * as Effect from 'effect/Effect'
 import React, { createContext, useContext, useMemo } from 'react'
 import { useQuery, useMutation, useAction } from './index'
 import type {
-  InferFunctionErrors,
+  InferModuleFunctionErrors,
   InferFunctionArgs,
   InferFunctionReturns
 } from './types'
@@ -87,14 +87,14 @@ function useAtomRuntime() {
  */
 export function useAtomValueConfect<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
   args: InferFunctionArgs<ApiObject[M][F]>,
-): Result.Result<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F>> {
+): Result.Result<InferFunctionReturns<ApiObject[M][F]>, InferModuleFunctionErrors<M, F>> {
   const atomRuntime = useAtomRuntime()
   const queryEffect = useQuery(apiObject, moduleName, functionName)(args)
 
@@ -142,7 +142,7 @@ export function useAtomValueConfect<
  */
 export function useAtomSetConfect<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
@@ -209,7 +209,7 @@ export function useAtomSetConfect<
  */
 export function useAtomSetConfectAction<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
@@ -278,7 +278,7 @@ export function useAtomSetConfectAction<
  */
 export function useAtomConfect<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,

@@ -2,7 +2,7 @@ import { useConvexQuery, useConvexAction, useConvexMutation } from "@convex-dev/
 import { Effect } from 'effect'
 import * as Option from 'effect/Option'
 import type {
-  InferFunctionErrors,
+  InferModuleFunctionErrors,
   InferFunctionArgs,
   InferFunctionReturns
 } from './types'
@@ -42,7 +42,7 @@ export type { ConfectErrorTypes } from './types'
  */
 export function useQuery<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
@@ -50,7 +50,7 @@ export function useQuery<
   functionName: F,
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<
   InferFunctionReturns<ApiObject[M][F]>,
-  InferFunctionErrors<F>,
+  InferModuleFunctionErrors<M, F>,
   never
 >
 
@@ -182,13 +182,13 @@ export function useQuery(...args: any[]) {
  */
 export function useMutation<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F>, never>
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferModuleFunctionErrors<M, F>, never>
 
 export function useMutation(...args: any[]) {
   const [apiObject, moduleName, functionName] = args
@@ -266,13 +266,13 @@ export function useMutation(...args: any[]) {
  */
 export function useAction<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferFunctionErrors<F>, never>
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Effect.Effect<InferFunctionReturns<ApiObject[M][F]>, InferModuleFunctionErrors<M, F>, never>
 
 // Implementation that handles the API
 export function useAction(...args: any[]) {
@@ -345,14 +345,14 @@ export function useAction(...args: any[]) {
  */
 export function useQueryOption<
   ApiObject extends Record<string, any>,
-  M extends keyof ApiObject,
+  M extends keyof ApiObject & string,
   F extends keyof ApiObject[M] & string,
 >(
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
 ): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<
-  InferFunctionReturns<ApiObject[M][F]> | InferFunctionErrors<F>
+  InferFunctionReturns<ApiObject[M][F]> | InferModuleFunctionErrors<M, F>
 >
 
 // Implementation that handles the API using Effect instead of try-catch
