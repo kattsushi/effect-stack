@@ -1,12 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
-import { execSync } from 'child_process'
-import path from 'path'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import * as fs from 'fs'
+import * as path from 'path'
+import * as chokidar from 'chokidar'
+import { ConfectTypeExtractor, ErrorTypesGenerator } from './generate-error-types'
 
 /**
  * CLI for generating Confect error types
@@ -32,7 +29,7 @@ async function main() {
       watch = true
     } else if (arg === '--help') {
       showHelp()
-      return
+      process.exit(0)
     }
   }
 
@@ -42,7 +39,7 @@ async function main() {
     process.exit(1)
   }
 
-  console.log('🚀 Confect Error Types Generator')
+  console.log('🚀 Confect Error Types Generator (Bun)')
   console.log(`📁 Convex directory: ${convexDir}`)
   console.log(`📄 Output file: ${outputPath}`)
 
@@ -50,23 +47,26 @@ async function main() {
     console.log('👀 Watch mode enabled...')
     await watchAndGenerate(convexDir, outputPath)
   } else {
-    generateOnce(convexDir, outputPath)
+    await generateOnce(convexDir, outputPath)
   }
 }
 
 /**
  * Generate types once
  */
-function generateOnce(convexDir, outputPath) {
+async function generateOnce(convexDir: string, outputPath: string) {
   try {
-    const scriptPath = path.join(__dirname, '../scripts/generate-error-types.ts')
-    const command = `npx tsx "${scriptPath}" "${convexDir}" "${outputPath}"`
-
     console.log('⚡ Generating types...')
-    execSync(command, { stdio: 'inherit' })
+    
+    const extractor = new ConfectTypeExtractor(convexDir)
+    const result = await extractor.extract()
 
+    const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
+    generator.generate()
+
+    console.log('✅ Error types generation completed')
   } catch (error) {
-    console.error('❌ Error during generation:', error.message)
+    console.error('❌ Error during generation:', error)
     process.exit(1)
   }
 }
@@ -74,12 +74,11 @@ function generateOnce(convexDir, outputPath) {
 /**
  * Generate types in watch mode
  */
-async function watchAndGenerate(convexDir, outputPath) {
+async function watchAndGenerate(convexDir: string, outputPath: string) {
   // Generate once at startup
-  generateOnce(convexDir, outputPath)
+  await generateOnce(convexDir, outputPath)
 
-  // Setup watcher
-  const { default: chokidar } = await import('chokidar')
+  // Use chokidar for file watching
 
   // Watcher for function files AND api.d.ts
   const watcher = chokidar.watch([
@@ -95,42 +94,41 @@ async function watchAndGenerate(convexDir, outputPath) {
     persistent: true
   })
 
-  let timeout = null
+  let timeout: NodeJS.Timeout | null = null
 
   watcher.on('change', (filePath) => {
     if (filePath.endsWith('.ts')) {
       console.log(`📝 File modified: ${filePath}`)
-
-      // Debounce to avoid multiple regenerations
-      if (timeout) clearTimeout(timeout)
-
-      timeout = setTimeout(() => {
-        console.log('🔄 Regenerating types...')
-        generateOnce(convexDir, outputPath)
+      
+      // Debounce rapid changes
+      if (timeout) {
+        clearTimeout(timeout)
+      }
+      
+      timeout = setTimeout(async () => {
+        await generateOnce(convexDir, outputPath)
       }, 500)
     }
   })
 
-  console.log('✅ Watcher configured. Press Ctrl+C to exit.')
-
-  // Handle graceful shutdown
-  const handleExit = () => {
-    console.log('\n👋 Closing watcher...')
+  console.log('👀 Watching for changes... Press Ctrl+C to stop.')
+  
+  // Keep the process alive
+  process.on('SIGINT', () => {
+    console.log('\n👋 Stopping watcher...')
     watcher.close()
     process.exit(0)
-  }
-
-  process.on('SIGINT', handleExit)
-  process.on('SIGTERM', handleExit)
-  process.on('SIGHUP', handleExit)
+  })
 }
 
 /**
- * Show help
+ * Show help message
  */
 function showHelp() {
   console.log(`
-🚀 Confect Error Types Generator
+🚀 Confect Error Types Generator (Bun)
+
+Generates TypeScript error types for Confect functions from Convex schema.
 
 Usage:
   confect-generate [options]
@@ -149,7 +147,7 @@ Examples:
 `)
 }
 
-// Execute
+// Execute if called directly
 main().catch(error => {
   console.error('❌ Error:', error)
   process.exit(1)

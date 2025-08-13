@@ -1409,8 +1409,4 @@ export async function generateErrorTypes(convexDir: string, outputPath: string):
   }
 }
 
-// Execute if called directly
-const convexDir = process.argv[2] || './convex'
-const outputPath = process.argv[3] || './convex/_generated-types/confect-error-types.d.ts'
-
-generateErrorTypes(convexDir, outputPath)
+// This file is now imported by the CLI, not executed directly
