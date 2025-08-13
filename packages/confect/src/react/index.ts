@@ -25,6 +25,9 @@ export type { ConfectErrorTypes } from './types'
  * function TodosList() {
  *   const [todos, setTodos] = useState([])
  *   const todosEffect = useQuery(api, 'functions', 'listTodos')({})
+ *   //        ^ Effect<Todo[], NotFoundError | ValidationError, never>
+ *   // Success channel: Todo[] - Array of todo objects
+ *   // Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
  *
  *   useEffect(() => {
  *     const program = todosEffect.pipe(
@@ -153,6 +156,9 @@ export function useQuery(...args: any[]) {
  * function AddTodoForm() {
  *   const [text, setText] = useState('')
  *   const addTodoEffect = useMutation(api, 'functions', 'insertTodo')
+ *   //        ^ (args: {text: string}) => Effect<Id<"todos">, ValidationError | NetworkError, never>
+ *   // Success channel: Id<"todos"> - The created todo ID
+ *   // Error channel: ValidationError | NetworkError - Typed errors from Confect hooks
  *
  *   const handleSubmit = () => {
  *     const program = addTodoEffect({ text }).pipe(
@@ -232,6 +238,9 @@ export function useMutation(...args: any[]) {
  *
  * function TodoItem({ todo }) {
  *   const toggleTodoEffect = useAction(api, 'functions', 'toggleTodo')
+ *   //        ^ (args: {id: Id<"todos">}) => Effect<void, NotFoundError | ValidationError, never>
+ *   // Success channel: void - No return value for toggle action
+ *   // Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
  *
  *   const handleToggle = () => {
  *     const program = toggleTodoEffect({ id: todo._id }).pipe(
@@ -309,6 +318,10 @@ export function useAction(...args: any[]) {
  *
  * function TodosList() {
  *   const todosResult = useQueryOption(api, 'functions', 'listTodos')({})
+ *   //        ^ Option<Todo[] | NotFoundError | ValidationError>
+ *   // Option.none() = Loading state
+ *   // Success channel: Todo[] - Array of todo objects
+ *   // Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
  *
  *   return Option.match(todosResult, {
  *     onNone: () => <div>Loading...</div>,

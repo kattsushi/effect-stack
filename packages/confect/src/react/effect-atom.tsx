@@ -65,6 +65,9 @@ function useAtomRuntime() {
  *
  * function TodosList() {
  *   const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
+ *   //        ^ Result<Todo[], NotFoundError | ValidationError>
+ *   // Success channel: Todo[] - Array of todo objects
+ *   // Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
  *
  *   return (
  *     <div>
@@ -75,7 +78,7 @@ function useAtomRuntime() {
  *             {todos.map(todo => <li key={todo._id}>{todo.text}</li>)}
  *           </ul>
  *         ))
- *         .onFailure(() => <div>Error loading todos</div>)
+ *         .onFailure((error) => <div>Error loading todos: {error.message}</div>)
  *         .render()}
  *     </div>
  *   )
@@ -115,6 +118,9 @@ export function useAtomValueConfect<
  * function AddTodoForm() {
  *   const [text, setText] = useState('')
  *   const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
+ *   //      ^ (args: {text: string}) => Promise<Id<"todos">>
+ *   // Success channel: Id<"todos"> - The created todo ID
+ *   // Error channel: ValidationError | NetworkError - Typed errors from Confect hooks
  *
  *   const handleSubmit = async () => {
  *     try {
@@ -176,6 +182,9 @@ export function useAtomSetConfect<
  *
  * function TodoItem({ todo }) {
  *   const toggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
+ *   //        ^ (args: {id: Id<"todos">}) => Promise<void>
+ *   // Success channel: void - No return value for toggle action
+ *   // Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
  *
  *   const handleToggle = async () => {
  *     try {
@@ -241,6 +250,11 @@ export function useAtomSetConfectAction<
  *
  * function TodosWithAdd() {
  *   const [todosResult, addTodo] = useAtomConfect(api, 'functions', 'listTodos', {})
+ *   //      ^ [Result<Todo[], NotFoundError | ValidationError>, (args: {text: string}) => Promise<Id<"todos">>]
+ *   // Query Success channel: Todo[] - Array of todo objects
+ *   // Query Error channel: NotFoundError | ValidationError - Typed errors from Confect hooks
+ *   // Mutation Success channel: Id<"todos"> - The created todo ID
+ *   // Mutation Error channel: ValidationError | NetworkError - Typed errors from Confect hooks
  *
  *   const handleAdd = async (text: string) => {
  *     await addTodo({ text })
@@ -255,6 +269,7 @@ export function useAtomSetConfectAction<
  *             <button onClick={() => handleAdd('New todo')}>Add Todo</button>
  *           </div>
  *         ))
+ *         .onFailure((error) => <div>Error: {error.message}</div>)
  *         .render()}
  *     </div>
  *   )
