@@ -9,6 +9,8 @@ import type {
 
 export type { ConfectErrorTypes } from './types'
 
+
+
 /**
  * Hook for reactive queries that return Effect. Use this for data fetching
  * operations that need reactive updates and Effect-based error handling.
@@ -57,54 +59,63 @@ export function useQuery(...args: any[]) {
     try {
       const convexResult = useConvexQuery(fn as any, actualArgs)
 
-      if (convexResult === undefined) {
-        return Effect.never
-      }
-
-      if (convexResult && typeof convexResult === 'object') {
-        if ('__convexError' in convexResult) {
-          return Effect.fail((convexResult as any).__convexError)
+      const processResult = Effect.sync(() => {
+        if (convexResult === undefined) {
+          return Effect.never
         }
 
-        if ('_tag' in convexResult && 'message' in convexResult) {
-          return Effect.fail(convexResult)
-        }
+        if (convexResult && typeof convexResult === 'object') {
+          if ('__convexError' in convexResult) {
+            return Effect.fail((convexResult as any).__convexError)
+          }
 
-        if ('message' in convexResult) {
-          const message = (convexResult as any).message
-          if (typeof message === 'string' && message.includes('ConvexError:')) {
-            const jsonMatch = message.match(/ConvexError: ({.*})/)
-            if (jsonMatch) {
-              try {
-                const parsed = JSON.parse(jsonMatch[1])
-                if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
-                  return Effect.fail(parsed)
+          if ('_tag' in convexResult && 'message' in convexResult) {
+            return Effect.fail(convexResult)
+          }
+
+          if ('message' in convexResult) {
+            const message = (convexResult as any).message
+            if (typeof message === 'string' && message.includes('ConvexError:')) {
+              const jsonMatch = message.match(/ConvexError: ({.*})/)
+              if (jsonMatch) {
+                try {
+                  const parsed = JSON.parse(jsonMatch[1])
+                  if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
+                    return Effect.fail(parsed)
+                  }
+                  return Effect.fail({ _tag: 'UnknownError', message: JSON.stringify(parsed) })
+                } catch (parseError) {
+                  return Effect.fail({ _tag: 'ParseError', message: 'Failed to parse ConvexError' })
                 }
-              } catch (parseError) {
-                // Fall through
               }
             }
           }
-        }
 
-        if ('error' in convexResult && convexResult.error) {
-          const error = (convexResult as any).error
-          if (error && typeof error === 'object' && 'data' in error) {
-            return Effect.fail(error.data)
+          if ('error' in convexResult && convexResult.error) {
+            const error = (convexResult as any).error
+            if (error && typeof error === 'object' && 'data' in error) {
+              return Effect.fail(error.data)
+            }
+            return Effect.fail(error)
           }
-          return Effect.fail(error)
-        }
 
-        if ('data' in convexResult) {
-          const data = (convexResult as any).data
-          if (data === undefined) {
-            return Effect.never
+          if ('data' in convexResult) {
+            const data = (convexResult as any).data
+            if (data === undefined) {
+              return Effect.never
+            }
+            return Effect.succeed(data)
           }
-          return Effect.succeed(data)
         }
-      }
 
-      return Effect.succeed(convexResult)
+        return Effect.succeed(convexResult)
+      }).pipe(
+        Effect.flatMap((effect) => effect),
+        Effect.catchAll((error) => Effect.fail(error))
+      )
+
+      return processResult
+
     } catch (error) {
       if (error && typeof error === 'object' && 'message' in error) {
         const message = (error as any).message
@@ -116,13 +127,13 @@ export function useQuery(...args: any[]) {
               if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
                 return Effect.fail(parsed)
               }
+              return Effect.fail({ _tag: 'UnknownError', message: JSON.stringify(parsed) })
             } catch (parseError) {
               // Fall through
             }
           }
         }
       }
-
       return Effect.fail(error as any)
     }
   }
@@ -282,8 +293,13 @@ export function useAction(...args: any[]) {
 }
 
 /**
- * Hook for queries that return Option with loading and error states.
- * Use this when you need simple reactive queries without Effect composition.
+ * Hook for queries that return Option<data | error>.
+ * Uses Effect internally instead of try-catch for better error handling.
+ *
+ * Returns:
+ * - Option.none() = loading state
+ * - Option.some(data) = success with data
+ * - Option.some(error) = error state (typed as InferFunctionErrors<F>)
  *
  * @example
  * ```tsx
@@ -292,23 +308,24 @@ export function useAction(...args: any[]) {
  * import * as Option from 'effect/Option'
  *
  * function TodosList() {
- *   const todosQuery = useQueryOption(api, 'functions', 'listTodos')({})
+ *   const todosResult = useQueryOption(api, 'functions', 'listTodos')({})
  *
- *   if (todosQuery.loading) {
- *     return <div>Loading...</div>
- *   }
+ *   return Option.match(todosResult, {
+ *     onNone: () => <div>Loading...</div>,
+ *     onSome: (result) => {
+ *       // Check if result is an error (has _tag property)
+ *       if (result && typeof result === 'object' && '_tag' in result) {
+ *         return <div>Error ({result._tag}): {result.message}</div>
+ *       }
  *
- *   if (todosQuery.error) {
- *     return <div>Error loading todos</div>
- *   }
- *
- *   return Option.match(todosQuery.data, {
- *     onNone: () => <div>No todos found</div>,
- *     onSome: (todos) => (
- *       <ul>
- *         {todos.map(todo => <li key={todo._id}>{todo.text}</li>)}
- *       </ul>
- *     )
+ *       // Success case - result is the todos array
+ *       const todos = result as Todo[]
+ *       return (
+ *         <ul>
+ *           {todos.map(todo => <li key={todo._id}>{todo.text}</li>)}
+ *         </ul>
+ *       )
+ *     }
  *   })
  * }
  * ```
@@ -321,119 +338,88 @@ export function useQueryOption<
   apiObject: ApiObject,
   moduleName: M,
   functionName: F,
-): (args: InferFunctionArgs<ApiObject[M][F]>) => {
-  data: Option.Option<InferFunctionReturns<ApiObject[M][F]>>
-  error: boolean
-  loading: boolean
-}
+): (args: InferFunctionArgs<ApiObject[M][F]>) => Option.Option<
+  InferFunctionReturns<ApiObject[M][F]> | InferFunctionErrors<F>
+>
 
-// Implementation that handles the API (same strategy as useQuery)
+// Implementation that handles the API using Effect instead of try-catch
 export function useQueryOption(...args: any[]) {
   // Extract arguments
   const [apiObject, moduleName, functionName] = args
   const fn = apiObject[moduleName][functionName]
 
   return (actualArgs: any) => {
-    // Wrap useConvexQuery in a try-catch to handle synchronous errors
     try {
-      // Use the existing Convex hook to get result
       const convexResult = useConvexQuery(fn, actualArgs)
 
-      // Transform result to Option with error and loading state
-      if (convexResult === undefined) {
-        // Still loading
-        return {
-          data: Option.none(),
-          error: false,
-          loading: true
+      const processResult = Effect.sync(() => {
+        if (convexResult === undefined) {
+          return Option.none()
         }
-      }
 
-      // Check if the result is an error (multiple formats)
-      if (convexResult && typeof convexResult === 'object') {
-        // Format 1: __convexError (existing)
-        if ('__convexError' in convexResult) {
-          console.warn('Query failed in useQueryOption:', (convexResult as any).__convexError)
-          return {
-            data: Option.none(),
-            error: true,
-            loading: false
+        if (convexResult && typeof convexResult === 'object') {
+          if ('__convexError' in convexResult) {
+            const error = (convexResult as any).__convexError
+            return Option.some({
+              _tag: error._tag || 'ConvexError',
+              message: error.message || String(error)
+            })
           }
-        }
 
-        // Format 2: ConvexError object directly
-        if ('_tag' in convexResult && 'message' in convexResult) {
-          console.warn('Query failed in useQueryOption:', convexResult)
-          return {
-            data: Option.none(),
-            error: true,
-            loading: false
+          if ('_tag' in convexResult && 'message' in convexResult) {
+            return Option.some(convexResult)
           }
-        }
 
-        // Format 3: Error object with ConvexError message
-        if ('message' in convexResult) {
-          const message = (convexResult as any).message
-          if (typeof message === 'string' && message.includes('ConvexError:')) {
-            const jsonMatch = message.match(/ConvexError: ({.*})/)
-            if (jsonMatch) {
-              try {
-                const parsed = JSON.parse(jsonMatch[1])
-                if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
-                  console.warn('Query failed in useQueryOption:', parsed)
-                  return {
-                    data: Option.none(),
-                    error: true,
-                    loading: false
+          if ('message' in convexResult) {
+            const message = (convexResult as any).message
+            if (typeof message === 'string' && message.includes('ConvexError:')) {
+              const jsonMatch = message.match(/ConvexError: ({.*})/)
+              if (jsonMatch) {
+                try {
+                  const parsed = JSON.parse(jsonMatch[1])
+                  if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
+                    return Option.some(parsed)
                   }
+                } catch (parseError) {
+                  return Option.some({
+                    _tag: 'ParseError',
+                    message: 'Failed to parse ConvexError'
+                  })
                 }
-              } catch (parseError) {
-                // Fall through
               }
             }
           }
-        }
 
-        // Format 4: Check if this is a TanStack Query result object with error
-        if ('error' in convexResult && convexResult.error) {
-          console.warn('Query failed in useQueryOption:', (convexResult as any).error)
-          return {
-            data: Option.none(),
-            error: true,
-            loading: false
+          if ('error' in convexResult && convexResult.error) {
+            const error = (convexResult as any).error
+            return Option.some({
+              _tag: error._tag || 'QueryError',
+              message: error.message || String(error)
+            })
           }
-        }
 
-        // Format 5: Check if this is a TanStack Query result object with data
-        if ('data' in convexResult) {
-          const data = (convexResult as any).data
-          if (data === undefined) {
-            // Still loading
-            return {
-              data: Option.none(),
-              error: false,
-              loading: true
+          if ('data' in convexResult) {
+            const data = (convexResult as any).data
+            if (data === undefined) {
+              return Option.none()
             }
-          }
-          return {
-            data: Option.some(data),
-            error: false,
-            loading: false
+            return Option.some(data)
           }
         }
-      }
 
-      // Success case - return some with the result
-      return {
-        data: Option.some(convexResult),
-        error: false,
-        loading: false
-      }
+        return Option.some(convexResult)
+      }).pipe(
+        Effect.catchAll((error) => {
+          return Effect.succeed(Option.some({
+            _tag: 'UnknownError',
+            message: String(error)
+          }))
+        })
+      )
+
+      return Effect.runSync(processResult)
+
     } catch (error) {
-      // Handle synchronous errors from useConvexQuery
-      console.warn('Query failed in useQueryOption with exception:', error)
-
-      // Parse ConvexError from the caught error for better logging
       if (error && typeof error === 'object' && 'message' in error) {
         const message = (error as any).message
         if (typeof message === 'string' && message.includes('ConvexError:')) {
@@ -442,7 +428,7 @@ export function useQueryOption(...args: any[]) {
             try {
               const parsed = JSON.parse(jsonMatch[1])
               if (parsed && typeof parsed === 'object' && '_tag' in parsed) {
-                console.warn('Parsed ConvexError in useQueryOption:', parsed)
+                return Option.some(parsed)
               }
             } catch (parseError) {
               // Fall through
@@ -451,11 +437,10 @@ export function useQueryOption(...args: any[]) {
         }
       }
 
-      return {
-        data: Option.none(),
-        error: true,
-        loading: false
-      }
+      return Option.some({
+        _tag: 'UnknownError',
+        message: String(error)
+      })
     }
   }
 }

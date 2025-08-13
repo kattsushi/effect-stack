@@ -79,58 +79,40 @@ function TodosRoute() {
           </div>
 
           <div className="space-y-2">
-            {(() => {
-              if (todosQuery.loading) {
-                return (
-                  <div className="flex justify-center py-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
-                  </div>
-                )
-              }
+            {Option.match(todosQuery, {
+              onNone: () => <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>,
+              onSome: (todosData) => {
+                if (todosData && typeof todosData === 'object' && '_tag' in todosData) {
+                  return <p className="py-8 text-center text-destructive">Error: {todosData.message}</p>
+                }
+                if (Array.isEmptyReadonlyArray(todosData)) {
+                  return <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>
+                }
 
-              if (todosQuery.error) {
-                return (
-                  <div className="py-8 text-center">
-                    <p className="mb-4 text-destructive">Error loading todos</p>
-                    <Button onClick={() => window.location.reload()} variant="outline">
-                      Refresh
+                return todosData.map((todo) => (
+                  <div className="flex items-center justify-between rounded-lg border bg-card p-3" key={todo._id}>
+                    <div className="flex flex-1 items-center gap-3">
+                      <Checkbox checked={todo.completed} onCheckedChange={() => handleToggleTodo(todo._id)} />
+                      <span
+                        className={`flex-1 ${
+                          todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                        }`}
+                      >
+                        {todo.text}
+                      </span>
+                    </div>
+                    <Button
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteTodoWithConfirm(todo._id)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                )
-              }
-
-              return Option.match(todosQuery.data, {
-                onNone: () => <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>,
-                onSome: (todosData) => {
-                  if (Array.isEmptyReadonlyArray(todosData)) {
-                    return <p className="py-8 text-center text-muted-foreground">No todos yet. Add one above!</p>
-                  }
-
-                  return todosData.map((todo) => (
-                    <div className="flex items-center justify-between rounded-lg border bg-card p-3" key={todo._id}>
-                      <div className="flex flex-1 items-center gap-3">
-                        <Checkbox checked={todo.completed} onCheckedChange={() => handleToggleTodo(todo._id)} />
-                        <span
-                          className={`flex-1 ${
-                            todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
-                          }`}
-                        >
-                          {todo.text}
-                        </span>
-                      </div>
-                      <Button
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteTodoWithConfirm(todo._id)}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                },
-              })
-            })()}
+                ))
+              },
+            })}
           </div>
         </CardContent>
       </Card>

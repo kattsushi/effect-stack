@@ -108,8 +108,14 @@ function TodosRoute() {
                   ))
                 ),
               )
-              .onDefect(() => <p className="py-4 text-center text-destructive">Error loading todos</p>)
-              .onFailure(() => <p className="py-4 text-center text-destructive">Error loading todos</p>)
+              .onError((error) => (
+                <p className="py-4 text-center text-destructive">Error loading todos error: {error.message}</p>
+              ))
+              .onDefect((defect) => (
+                <p className="py-4 text-center text-destructive">
+                  Error loading todos defect: {JSON.stringify(defect)}
+                </p>
+              ))
               .orNull()}
           </div>
 
