@@ -7,7 +7,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["generate-error-types"],
       "options": {
-        "commands": ["convex dev", "pnpm nx watch-error-types backend"],
+        "commands": ["convex dev", "pnpm watch:error-types"],
         "parallel": true,
         "cwd": "apps/backend"
       }

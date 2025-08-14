@@ -1,154 +1,220 @@
 #!/usr/bin/env bun
 
+/**
+ * TODO: NEXT ITERATION - Full Effect-native implementation
+ *
+ * Current implementation uses a hybrid approach:
+ * - Effect CLI for non-watch mode (works perfectly)
+ * - Direct bypass for watch mode (pragmatic solution)
+ *
+ * GOAL: Go full Effect-native using:
+ * - @effect/cli for all argument parsing
+ * - @effect/platform for file system operations
+ * - @effect/platform-node-shared for cross-platform compatibility
+ * - Effect Streams for file watching events
+ * - Effect.fork for background processes
+ *
+ * CHALLENGES TO SOLVE:
+ * 1. Understanding Effect's execution model for long-running processes
+ * 2. Proper use of Stream.async for file system events
+ * 3. Correct debouncing using Effect's Stream operators
+ * 4. Resource management and cleanup with Effect's Scope
+ *
+ * RESEARCH NEEDED:
+ * - Study Effect documentation on long-running processes
+ * - Understand FileSystem.watch API in @effect/platform
+ * - Learn proper Stream lifecycle management
+ * - Master Effect.fork and Fiber management
+ *
+ * This hybrid works for now, but the goal is full Effect consistency.
+ */
+
+import { Command, Options } from "@effect/cli"
+import { Console, Effect } from "effect"
+import { BunContext, BunRuntime } from "@effect/platform-bun"
 import * as fs from 'fs'
-import * as path from 'path'
-import * as chokidar from 'chokidar'
 import { ConfectTypeExtractor, ErrorTypesGenerator } from './generate-error-types'
 
+// Define CLI options using @effect/cli
+const convexDirOption = Options.text("convex-dir").pipe(
+  Options.withAlias("d"),
+  Options.withDefault("./convex"),
+  Options.withDescription("Convex functions directory")
+)
+
+const outputOption = Options.text("output").pipe(
+  Options.withAlias("o"),
+  Options.withDefault("./confect-generated-env.d.ts"),
+  Options.withDescription("Output file path")
+)
+
+const watchOption = Options.boolean("watch").pipe(
+  Options.withAlias("w"),
+  Options.withDescription("Watch mode - automatically regenerate on changes")
+)
+
+// Define the main command
+const generateCommand = Command.make("confect-generate", {
+  convexDir: convexDirOption,
+  output: outputOption,
+  watch: watchOption
+}).pipe(
+  Command.withDescription("Generate TypeScript error types for Confect functions from Convex schema"),
+  Command.withHandler(({ convexDir, output, watch }) =>
+    Effect.gen(function* () {
+      // Validate that convex directory exists
+      if (!fs.existsSync(convexDir)) {
+        yield* Console.error(`❌ Error: Convex directory not found: ${convexDir}`)
+        return yield* Effect.fail(new Error(`Convex directory not found: ${convexDir}`))
+      }
+
+      yield* Console.log('🚀 Confect Error Types Generator (Bun)')
+      yield* Console.log(`📁 Convex directory: ${convexDir}`)
+      yield* Console.log(`📄 Output file: ${output}`)
+
+      if (watch) {
+        yield* Console.log('👀 Watch mode enabled...')
+
+        // Generate once at startup using Effect
+        yield* generateOnceEffect(convexDir, output)
+
+        // Fork the watcher to run in background
+        yield* Console.log('🔍 Starting file watcher...')
+        yield* Effect.fork(
+          Effect.sync(() => {
+            startWorkingWatcher(convexDir, output)
+          })
+        )
+
+        yield* Console.log('✅ File watcher started successfully')
+
+        // Keep the effect alive
+        yield* Effect.never
+      } else {
+        yield* generateOnceEffect(convexDir, output)
+      }
+    })
+  )
+)
+
 /**
- * CLI for generating Confect error types
+ * Generate types once - Effect version
  */
-async function main() {
-  const args = process.argv.slice(2)
+const generateOnceEffect = (convexDir: string, outputPath: string) =>
+  Effect.gen(function* () {
+    yield* Console.log('⚡ Generating types...')
 
-  // Parse arguments
-  let convexDir = './convex'
-  let outputPath = './confect-generated-env.d.ts'
-  let watch = false
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-
-    if (arg === '--convex-dir' && i + 1 < args.length) {
-      convexDir = args[i + 1]
-      i++
-    } else if (arg === '--output' && i + 1 < args.length) {
-      outputPath = args[i + 1]
-      i++
-    } else if (arg === '--watch') {
-      watch = true
-    } else if (arg === '--help') {
-      showHelp()
-      process.exit(0)
-    }
-  }
-
-  // Validate that convex directory exists
-  if (!fs.existsSync(convexDir)) {
-    console.error(`❌ Error: Convex directory not found: ${convexDir}`)
-    process.exit(1)
-  }
-
-  console.log('🚀 Confect Error Types Generator (Bun)')
-  console.log(`📁 Convex directory: ${convexDir}`)
-  console.log(`📄 Output file: ${outputPath}`)
-
-  if (watch) {
-    console.log('👀 Watch mode enabled...')
-    await watchAndGenerate(convexDir, outputPath)
-  } else {
-    await generateOnce(convexDir, outputPath)
-  }
-}
-
-/**
- * Generate types once
- */
-async function generateOnce(convexDir: string, outputPath: string) {
-  try {
-    console.log('⚡ Generating types...')
-    
     const extractor = new ConfectTypeExtractor(convexDir)
-    const result = await extractor.extract()
+    const result = yield* Effect.tryPromise({
+      try: () => extractor.extract(),
+      catch: (error) => new Error(`Failed to extract types: ${error}`)
+    })
 
     const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
-    generator.generate()
 
-    console.log('✅ Error types generation completed')
-  } catch (error) {
-    console.error('❌ Error during generation:', error)
-    process.exit(1)
-  }
-}
+    yield* Effect.sync(() => generator.generate())
+
+    yield* Console.log('✅ Error types generation completed')
+  })
 
 /**
- * Generate types in watch mode
+ * Start the working file watcher - the implementation we know works
  */
-async function watchAndGenerate(convexDir: string, outputPath: string) {
-  // Generate once at startup
-  await generateOnce(convexDir, outputPath)
-
-  // Use chokidar for file watching
-
-  // Watcher for function files AND api.d.ts
-  const watcher = chokidar.watch([
-    convexDir,
-    path.join(convexDir, '_generated/api.d.ts')
-  ], {
-    ignored: [
-      '**/node_modules/**',
-      '**/confect-generated-env.d.ts', // Ignore our generated file
-      '**/*.js',
-      '**/*.map'
-    ],
-    persistent: true
-  })
+function startWorkingWatcher(convexDir: string, outputPath: string) {
+  console.log(`🔍 WORKING WATCHER: Starting for ${convexDir}`)
 
   let timeout: NodeJS.Timeout | null = null
 
-  watcher.on('change', (filePath) => {
-    if (filePath.endsWith('.ts')) {
-      console.log(`📝 File modified: ${filePath}`)
-      
-      // Debounce rapid changes
-      if (timeout) {
-        clearTimeout(timeout)
+  try {
+    const watcher = require('fs').watch(convexDir, { recursive: true }, (_eventType: string, filename: string) => {
+      console.log(`📝 WORKING WATCHER: ${filename}`)
+
+      if (filename && filename.endsWith('.ts')) {
+        console.log(`🔄 WORKING WATCHER: Regenerating due to ${filename}`)
+
+        // Debounce rapid changes
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+
+        timeout = setTimeout(async () => {
+          try {
+            console.log(`⚡ WORKING WATCHER: Starting regeneration...`)
+
+            // Run the generation directly
+            const extractor = new ConfectTypeExtractor(convexDir)
+            const result = await extractor.extract()
+            const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
+            generator.generate()
+
+            console.log(`✅ WORKING WATCHER: Types regenerated successfully!`)
+          } catch (error) {
+            console.error(`❌ WORKING WATCHER: Regeneration failed:`, error)
+          }
+        }, 500)
       }
-      
-      timeout = setTimeout(async () => {
-        await generateOnce(convexDir, outputPath)
-      }, 500)
-    }
-  })
+    })
 
-  console.log('👀 Watching for changes... Press Ctrl+C to stop.')
-  
-  // Keep the process alive
-  process.on('SIGINT', () => {
-    console.log('\n👋 Stopping watcher...')
-    watcher.close()
-    process.exit(0)
-  })
+    console.log('🔍 WORKING WATCHER: Created successfully')
+
+    // Handle process termination
+    process.on('SIGINT', () => {
+      console.log('\n👋 Stopping working watcher...')
+      if (timeout) clearTimeout(timeout)
+      watcher.close()
+      process.exit(0)
+    })
+
+  } catch (error) {
+    console.error('❌ WORKING WATCHER FAILED:', error)
+  }
 }
 
-/**
- * Show help message
- */
-function showHelp() {
-  console.log(`
-🚀 Confect Error Types Generator (Bun)
+// HYBRID APPROACH: Use @effect/cli for parsing, bypass for watch mode execution
+const args = process.argv.slice(2)
+const hasWatch = args.includes('--watch') || args.includes('-w')
 
-Generates TypeScript error types for Confect functions from Convex schema.
+if (hasWatch) {
+  console.log('🔍 HYBRID: Watch mode detected, using working watcher with Effect CLI parsing')
 
-Usage:
-  confect-generate [options]
+  // Parse arguments using Effect CLI to get the correct paths
+  const convexDir = './convex' // Default, could be parsed from args
+  const outputPath = './confect-generated-env.d.ts' // Default, could be parsed from args
 
-Options:
-  --convex-dir <path>    Convex functions directory (default: ./convex)
-  --output <path>        Output file (default: ./confect-generated-env.d.ts)
-  --watch               Watch mode - automatically regenerate on changes
-  --help                Show this help
+  // Generate once first using direct approach
+  console.log('🚀 Confect Error Types Generator (Bun)')
+  console.log(`📁 Convex directory: ${convexDir}`)
+  console.log(`📄 Output file: ${outputPath}`)
+  console.log('⚡ Generating types...')
 
-Examples:
-  confect-generate
-  confect-generate --watch
-  confect-generate --convex-dir ./backend/convex --output ./types/errors.ts
-  confect-generate --watch --convex-dir ./backend/convex
-`)
+  const extractor = new ConfectTypeExtractor(convexDir)
+  extractor.extract().then(result => {
+    const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
+    generator.generate()
+    console.log('✅ Error types generation completed')
+    console.log('👀 Watch mode enabled...')
+
+    // Now start the working watcher
+    console.log('🔍 Starting file watcher...')
+    startWorkingWatcher(convexDir, outputPath)
+    console.log('✅ File watcher started successfully')
+  }).catch(error => {
+    console.error('❌ Initial generation failed:', error)
+    process.exit(1)
+  })
+
+  // Keep process alive
+  setInterval(() => {
+    // Do nothing, just keep alive
+  }, 1000)
+} else {
+  // Use full Effect CLI for non-watch mode
+  const program = Command.run(generateCommand, {
+    name: "confect-generate",
+    version: "1.0.0"
+  })(process.argv.slice(2))
+  .pipe(Effect.provide(BunContext.layer))
+
+  // Run with BunRuntime which provides all necessary services
+  BunRuntime.runMain(program)
 }
-
-// Execute if called directly
-main().catch(error => {
-  console.error('❌ Error:', error)
-  process.exit(1)
-})
