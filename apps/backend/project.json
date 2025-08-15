@@ -5,7 +5,7 @@
   "targets": {
     "dev": {
       "executor": "nx:run-commands",
-      "dependsOn": ["generate-error-types"],
+      "dependsOn": ["generate-error-types", "^build:executable"],
       "options": {
         "commands": ["convex dev", "pnpm watch:error-types"],
         "parallel": true,
@@ -28,29 +28,8 @@
     },
     "check-types": {
       "executor": "nx:run-commands",
-      "dependsOn": ["generate-error-types"],
       "options": {
         "command": "tsc --noEmit",
-        "cwd": "apps/backend"
-      }
-    },
-    "generate-error-types": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "confect-generate",
-        "cwd": "apps/backend"
-      },
-      "inputs": [
-        "{projectRoot}/convex/**/*.ts",
-        "!{projectRoot}/convex/_generated/**",
-        "!{projectRoot}/convex/_generated-types/**"
-      ],
-      "outputs": ["{projectRoot}/convex/_generated-types"]
-    },
-    "watch-error-types": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "confect-generate --watch",
         "cwd": "apps/backend"
       }
     }
