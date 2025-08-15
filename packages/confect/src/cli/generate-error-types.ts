@@ -3,6 +3,10 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as ts from 'typescript'
+import * as Effect from "effect/Effect"
+import * as Console from "effect/Console"
+import * as FileSystem from "@effect/platform/FileSystem"
+import * as Path from "@effect/platform/Path"
 
 interface ExtractedFunction {
   name: string
@@ -1392,7 +1396,64 @@ export {}`
 }
 
 /**
- * Main function
+ * Confect Type Generator Service using Effect.Service with Effect-native FileSystem
+ */
+export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGeneratorService>()("ConfectTypeGeneratorService", {
+  effect: Effect.gen(function* () {
+    const fileSystem = yield* FileSystem.FileSystem
+    const pathService = yield* Path.Path
+
+    return {
+      generate: (convexDir: string, outputPath: string) =>
+        Effect.gen(function* () {
+          yield* Console.log('⚡ Generating types...')
+
+          // Use Effect-native approach for type extraction
+          const result = yield* extractTypesEffect(convexDir, fileSystem, pathService)
+
+          // Generate the output file using Effect-native FileSystem
+          yield* generateTypesFileEffect(result, outputPath, convexDir, fileSystem, pathService)
+
+          yield* Console.log('✅ Types generated')
+        })
+    }
+  })
+}) {}
+
+/**
+ * Extract types using Effect-native FileSystem
+ */
+const extractTypesEffect = (convexDir: string, fileSystem: FileSystem.FileSystem, pathService: Path.Path) =>
+  Effect.gen(function* () {
+    // For now, fallback to the existing implementation but wrapped in Effect
+    // TODO: Refactor ConfectTypeExtractor to be fully Effect-native
+    const extractor = new ConfectTypeExtractor(convexDir)
+    const result = yield* Effect.tryPromise({
+      try: () => extractor.extract(),
+      catch: (error) => new Error(`Failed to extract types: ${error}`)
+    })
+    return result
+  })
+
+/**
+ * Generate types file using Effect-native FileSystem
+ */
+const generateTypesFileEffect = (
+  result: ParseResult,
+  outputPath: string,
+  convexDir: string,
+  fileSystem: FileSystem.FileSystem,
+  pathService: Path.Path
+) =>
+  Effect.gen(function* () {
+    // For now, fallback to the existing implementation but wrapped in Effect
+    // TODO: Refactor ErrorTypesGenerator to be fully Effect-native
+    const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
+    yield* Effect.sync(() => generator.generate())
+  })
+
+/**
+ * Main function - kept for backward compatibility
  */
 export async function generateErrorTypes(convexDir: string, outputPath: string): Promise<void> {
   try {

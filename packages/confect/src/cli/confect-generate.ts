@@ -7,7 +7,7 @@ import * as Stream from "effect/Stream"
 import * as BunContext from "@effect/platform-bun/BunContext"
 import * as BunRuntime from "@effect/platform-bun/BunRuntime"
 import * as FileSystem from "@effect/platform/FileSystem"
-import { ConfectTypeExtractor, ErrorTypesGenerator } from './generate-error-types'
+import { ConfectTypeGeneratorService } from './generate-error-types'
 
 const convexDirOption = Options.text("convex-dir").pipe(
   Options.withAlias("d"),
@@ -44,46 +44,34 @@ const generateCommand = Command.make("confect-generate", {
         yield* Console.error(`❌ Convex directory not found: ${convexDir}`)
         return yield* Effect.fail(new Error(`Convex directory not found: ${convexDir}`))
       }
+      const typeGenerator = yield* ConfectTypeGeneratorService
 
       if (watch) {
-        yield* generateOnceEffect(convexDir, output)
+        yield* typeGenerator.generate(convexDir, output)
         yield* Console.log('� Watching for changes...')
 
         yield* fileSystem.watch(convexDir, { recursive: true }).pipe(
           Stream.filter((event) => event.path.endsWith(".ts")),
           Stream.debounce("500 millis"),
-          Stream.mapEffect(() => generateOnceEffect(convexDir, output)),
+          Stream.mapEffect(() => typeGenerator.generate(convexDir, output)),
           Stream.runDrain,
           Effect.forkScoped
         )
 
         yield* Effect.never
       } else {
-        yield* generateOnceEffect(convexDir, output)
+        yield* typeGenerator.generate(convexDir, output)
       }
     })
   )
 )
-
-const generateOnceEffect = (convexDir: string, outputPath: string) =>
-  Effect.gen(function* () {
-    const extractor = new ConfectTypeExtractor(convexDir)
-    const result = yield* Effect.tryPromise({
-      try: () => extractor.extract(),
-      catch: (error) => new Error(`Failed to extract types: ${error}`)
-    })
-
-    const generator = new ErrorTypesGenerator(result.functions, outputPath, result.typeDefinitions, convexDir)
-    yield* Effect.sync(() => generator.generate())
-    yield* Console.log('✅ Types generated')
-  })
-
 
 const program = Command.run(generateCommand, {
   name: "confect-generate",
   version: "1.0.0"
 })(process.argv)
 .pipe(
+  Effect.provide(ConfectTypeGeneratorService.Default),
   Effect.provide(BunContext.layer),
   Effect.scoped
 )
