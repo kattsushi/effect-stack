@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect"
 import * as Console from "effect/Console"
 import * as FileSystem from "@effect/platform/FileSystem"
 import * as Path from "@effect/platform/Path"
-import { ParseResult } from './shared-types'
+import { ParseResult } from '../shared-types'
 
 /**
  * Confect Type Extractor Service for analyzing TypeScript files and extracting Confect function definitions.

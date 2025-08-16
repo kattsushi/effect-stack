@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "vitest --run --typecheck --coverage",
     "test:watch": "vitest --typecheck --coverage",
-    "build:executable": "echo '🔨 Building Confect CLI executable...' && mkdir -p bin && pnpm dlx bun build --compile --outfile=bin/confect-generate ./src/cli/confect-generate.ts && echo '✅ Build completed!' && ls -la bin/confect-generate"
+    "build:executable": "echo '🔨 Building Confect CLI executable...' && mkdir -p bin && pnpm dlx bun build --compile --outfile=bin/confect-generate ./src/cli/main.ts && echo '✅ Build completed!' && ls -la bin/confect-generate"
   },
   "keywords": [
     "effect",
