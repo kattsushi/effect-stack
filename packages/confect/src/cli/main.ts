@@ -31,6 +31,7 @@ import * as FileSystem from "@effect/platform/FileSystem"
 import { ConfectTypeGeneratorService } from './services/type-generator-service'
 import { ConfectTypeExtractorService } from "./services/type-extractor-service"
 import { ErrorTypesGeneratorService } from "./services/error-types-generator-service"
+import { cliOptionsLayer } from "./services/cli-option-tag"
 
 /**
  * CLI option for specifying the Convex directory path.
@@ -85,22 +86,25 @@ const generateCommand = Command.make("confect-generate", {
       const typeGenerator = yield* ConfectTypeGeneratorService
 
       if (watch) {
-        yield* typeGenerator.generate(convexDir, output)
+        yield* typeGenerator.generate
         yield* Console.log('� Watching for changes...')
 
         yield* fileSystem.watch(convexDir, { recursive: true }).pipe(
           Stream.filter((event) => event.path.endsWith(".ts")),
           Stream.debounce("500 millis"),
-          Stream.mapEffect(() => typeGenerator.generate(convexDir, output)),
+          Stream.mapEffect(() => typeGenerator.generate),
           Stream.runDrain,
           Effect.forkScoped
         )
 
         yield* Effect.never
       } else {
-        yield* typeGenerator.generate(convexDir, output)
+        yield* typeGenerator.generate
       }
     })
+    .pipe(
+      Effect.provide(cliOptionsLayer({ convexDir, output }))
+    )
   )
 )
 

@@ -17,7 +17,7 @@ import { ErrorTypesGeneratorService } from "./error-types-generator-service"
  * @example
  * ```typescript
  * const generator = yield* ConfectTypeGeneratorService
- * yield* generator.generate('./convex', './types.d.ts')
+ * yield* generator.generate
  * ```
  */
 export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGeneratorService>()("ConfectTypeGeneratorService", {
@@ -27,21 +27,15 @@ export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGener
       /**
        * Generates TypeScript error type definitions for Confect functions.
        *
-       * @param convexDir - Path to the Convex directory to scan
-       * @param outputPath - Path where the generated types file will be written
        * @returns Effect that completes when type generation is done
        * @since 1.0.0
        */
-      generate: (convexDir: string, outputPath: string) =>
-        Effect.gen(function* () {
+      generate: Effect.gen(function* () {
           yield* Console.log('⚡ Generating types...')
-
           const extractor = yield* ConfectTypeExtractorService
-          const result = yield* extractor.extract(convexDir)
-
+          const result = yield* extractor.extract
           const generator = yield* ErrorTypesGeneratorService
-          yield* generator.generate(result.functions, outputPath, result.typeDefinitions, convexDir)
-
+          yield* generator.generate(result.functions)
           yield* createEnvironmentFiles()
         })
     }
