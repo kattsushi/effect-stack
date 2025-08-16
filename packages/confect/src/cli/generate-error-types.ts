@@ -1054,18 +1054,18 @@ export {}`
  * Confect Type Generator Service using Effect.Service with Effect-native FileSystem
  */
 export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGeneratorService>()("ConfectTypeGeneratorService", {
+  dependencies: [ConfectTypeExtractor.Default],
   effect: Effect.gen(function* () {
     return {
       generate: (convexDir: string, outputPath: string) =>
         Effect.gen(function* () {
           yield* Console.log('⚡ Generating types...')
 
-          // Use Effect-native approach for type extraction
-          const extractor = new ConfectTypeExtractor(convexDir)
-          const result = yield* Effect.tryPromise({
-            try: () => extractor.extract(),
-            catch: (error) => new Error(`Failed to extract types: ${error}`)
-          })
+          // Use ConfectTypeExtractor service
+          const extractor = yield* ConfectTypeExtractor
+          const result = yield* extractor.extract(convexDir)
+
+
 
           // Generate the output file using Effect-native FileSystem
           const fs = yield* FileSystem.FileSystem

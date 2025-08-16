@@ -6,8 +6,10 @@ import * as Command from "@effect/cli/Command"
 import * as Stream from "effect/Stream"
 import * as BunContext from "@effect/platform-bun/BunContext"
 import * as BunRuntime from "@effect/platform-bun/BunRuntime"
+
 import * as FileSystem from "@effect/platform/FileSystem"
 import { ConfectTypeGeneratorService } from './generate-error-types'
+import { ConfectTypeExtractor } from "./confect-type-extractor"
 
 const convexDirOption = Options.text("convex-dir").pipe(
   Options.withAlias("d"),
@@ -66,15 +68,15 @@ const generateCommand = Command.make("confect-generate", {
   )
 )
 
-const program = Command.run(generateCommand, {
+const programMain =Command.run(generateCommand, {
   name: "confect-generate",
   version: "1.0.0"
 })(process.argv)
 .pipe(
   Effect.provide(ConfectTypeGeneratorService.Default),
+  Effect.provide(ConfectTypeExtractor.Default),
   Effect.provide(BunContext.layer),
-  Effect.scoped
+  Effect.scoped,
 )
 
-
-BunRuntime.runMain(program)
+BunRuntime.runMain(programMain)

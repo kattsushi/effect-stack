@@ -3,7 +3,7 @@
 // This file should be committed to version control for other developers and CI/CD
 // This file is automatically loaded when you import @monorepo/confect/react/effect
 
-import type { NotFoundError } from './convex/functions.js'
+import type { NotFoundError } from './convex/functions'
 
 // Module augmentation for main react module
 declare module '@monorepo/confect/react' {
