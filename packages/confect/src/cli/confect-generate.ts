@@ -28,8 +28,8 @@ import * as Stream from "effect/Stream"
 import * as BunContext from "@effect/platform-bun/BunContext"
 import * as BunRuntime from "@effect/platform-bun/BunRuntime"
 import * as FileSystem from "@effect/platform/FileSystem"
-import { ConfectTypeGeneratorService } from './generate-error-types'
-import { ConfectTypeExtractor } from "./confect-type-extractor"
+import { ConfectTypeGeneratorService } from './type-generator-service'
+import { ConfectTypeExtractorService } from "./type-extractor-service"
 
 /**
  * CLI option for specifying the Convex directory path.
@@ -109,7 +109,7 @@ const programMain =Command.run(generateCommand, {
 })(process.argv)
 .pipe(
   Effect.provide(ConfectTypeGeneratorService.Default),
-  Effect.provide(ConfectTypeExtractor.Default),
+  Effect.provide(ConfectTypeExtractorService.Default),
   Effect.provide(BunContext.layer),
   Effect.scoped,
 )

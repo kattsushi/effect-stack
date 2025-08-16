@@ -8,7 +8,7 @@ import * as FileSystem from "@effect/platform/FileSystem"
 import * as Path from "@effect/platform/Path"
 import ts from 'typescript'
 import { ExtractedFunction } from './shared-types'
-import { ConfectTypeExtractor } from './confect-type-extractor'
+import { ConfectTypeExtractorService } from './type-extractor-service'
 
 /**
  * Generator for TypeScript error type definitions from Confect functions.
@@ -1099,7 +1099,7 @@ export {}`
  * ```
  */
 export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGeneratorService>()("ConfectTypeGeneratorService", {
-  dependencies: [ConfectTypeExtractor.Default],
+  dependencies: [ConfectTypeExtractorService.Default],
   effect: Effect.gen(function* () {
     return {
       /**
@@ -1114,7 +1114,7 @@ export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGener
         Effect.gen(function* () {
           yield* Console.log('⚡ Generating types...')
 
-          const extractor = yield* ConfectTypeExtractor
+          const extractor = yield* ConfectTypeExtractorService
           const result = yield* extractor.extract(convexDir)
 
 

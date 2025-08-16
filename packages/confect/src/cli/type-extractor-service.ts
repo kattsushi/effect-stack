@@ -15,12 +15,12 @@ import { ParseResult } from './shared-types'
  * @since 1.0.0
  * @example
  * ```typescript
- * const extractor = yield* ConfectTypeExtractor
+ * const extractor = yield* ConfectTypeExtractorService
  * const result = yield* extractor.extract('./convex')
  * console.log(`Found ${result.functions.length} Confect functions`)
  * ```
  */
-export class ConfectTypeExtractor extends Effect.Service<ConfectTypeExtractor>()("ConfectTypeExtractor", {
+export class ConfectTypeExtractorService extends Effect.Service<ConfectTypeExtractorService>()("ConfectTypeExtractorService", {
   effect: Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem
     const pathService = yield* Path.Path
