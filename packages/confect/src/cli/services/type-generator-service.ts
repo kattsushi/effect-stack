@@ -42,9 +42,6 @@ export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGener
           const generator = yield* ErrorTypesGeneratorService
           yield* generator.generate(result.functions, outputPath, result.typeDefinitions, convexDir)
 
-          const fs = yield* FileSystem.FileSystem
-          const path = yield* Path.Path
-
           let finalOutputPath = outputPath
           if (!finalOutputPath.endsWith('.d.ts')) {
             finalOutputPath = finalOutputPath.replace(/\.ts$/, '.d.ts')
@@ -53,11 +50,182 @@ export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGener
             }
           }
 
-          yield* createEnvironmentFiles(fs, path, finalOutputPath)
+          yield* createEnvironmentFiles(finalOutputPath)
         })
     }
   })
 }) {}
+
+/**
+ * Detects if this is a monorepo and finds app directories dynamically.
+ *
+ * @param fs - FileSystem service instance
+ * @param path - Path service instance
+ * @param monorepoRoot - Root directory of the monorepo
+ * @returns Effect that resolves to monorepo info and app directories
+ * @since 1.0.0
+ * @internal
+ */
+const detectAppDirectories = (
+  fs: FileSystem.FileSystem,
+  path: Path.Path,
+  monorepoRoot: string
+) =>
+  Effect.gen(function* () {
+    const packageJsonPath = path.join(monorepoRoot, 'package.json')
+    const exists = yield* fs.exists(packageJsonPath)
+
+    if (!exists) {
+      return { isMonorepo: false, appDirectories: [] }
+    }
+
+    const content = yield* fs.readFileString(packageJsonPath)
+    const packageJson = JSON.parse(content)
+
+    // Check if this has workspaces (indicating monorepo)
+    if (!packageJson.workspaces) {
+      return { isMonorepo: false, appDirectories: [] }
+    }
+
+    const workspaces = Array.isArray(packageJson.workspaces)
+      ? packageJson.workspaces
+      : packageJson.workspaces.packages || []
+
+    const appDirectories: string[] = []
+
+    // Process each workspace pattern
+    for (const workspace of workspaces) {
+      if (workspace.includes('*')) {
+        // Handle glob patterns like 'apps/*'
+        const baseDir = workspace.replace('/*', '')
+        const basePath = path.join(monorepoRoot, baseDir)
+        const baseDirExists = yield* fs.exists(basePath)
+
+        if (baseDirExists) {
+          const entries = yield* fs.readDirectory(basePath)
+          for (const entry of entries) {
+            const entryPath = path.join(basePath, entry)
+            const stat = yield* fs.stat(entryPath)
+            if (stat.type === "Directory") {
+              // Check if this directory has a package.json (indicating it's a package)
+              const packagePath = path.join(entryPath, 'package.json')
+              const hasPackage = yield* fs.exists(packagePath)
+              if (hasPackage) {
+                appDirectories.push(path.join(baseDir, entry))
+              }
+            }
+          }
+        }
+      } else {
+        // Handle specific workspace paths
+        const workspacePath = path.join(monorepoRoot, workspace)
+        const workspaceExists = yield* fs.exists(workspacePath)
+        if (workspaceExists) {
+          appDirectories.push(workspace)
+        }
+      }
+    }
+
+    // If no app directories found from workspaces, search for packages that depend on backend
+    if (appDirectories.length === 0) {
+      const backendPackageName = yield* getBackendPackageName(process.cwd())
+      const dependentPackages = yield* findPackagesDependingOn(fs, path, monorepoRoot, backendPackageName)
+      appDirectories.push(...dependentPackages)
+    }
+
+    // Filter out the backend package itself (where Convex is running)
+    const currentBackendPath = yield* getCurrentBackendPath(fs, path, monorepoRoot)
+    const filteredAppDirectories = appDirectories.filter(appDir => {
+      const fullAppPath = path.resolve(monorepoRoot, appDir)
+      return fullAppPath !== currentBackendPath
+    })
+
+    return { isMonorepo: true, appDirectories: filteredAppDirectories }
+  })
+
+/**
+ * Finds packages that depend on a specific backend package.
+ *
+ * @param fs - FileSystem service instance
+ * @param path - Path service instance
+ * @param monorepoRoot - Root directory of the monorepo
+ * @param backendPackageName - Name of the backend package to search for
+ * @returns Effect that resolves to array of relative paths to dependent packages
+ * @since 1.0.0
+ * @internal
+ */
+const findPackagesDependingOn = (
+  fs: FileSystem.FileSystem,
+  path: Path.Path,
+  monorepoRoot: string,
+  backendPackageName: string
+) =>
+  Effect.gen(function* () {
+    const dependentPackages: string[] = []
+
+    // Common directories to search for packages
+    const searchDirs = ['apps', 'packages', 'libs', 'services']
+
+    for (const searchDir of searchDirs) {
+      const searchPath = path.join(monorepoRoot, searchDir)
+      const exists = yield* fs.exists(searchPath)
+
+      if (exists) {
+        const entries = yield* fs.readDirectory(searchPath)
+
+        for (const entry of entries) {
+          const entryPath = path.join(searchPath, entry)
+          const stat = yield* fs.stat(entryPath)
+
+          if (stat.type === "Directory") {
+            const packageJsonPath = path.join(entryPath, 'package.json')
+            const hasPackageJson = yield* fs.exists(packageJsonPath)
+
+            if (hasPackageJson) {
+              const packageContent = yield* fs.readFileString(packageJsonPath)
+              const packageJson = JSON.parse(packageContent)
+
+              // Check if this package depends on the backend package
+              const allDeps = {
+                ...packageJson.dependencies,
+                ...packageJson.devDependencies,
+                ...packageJson.peerDependencies
+              }
+
+              if (allDeps[backendPackageName]) {
+                dependentPackages.push(path.join(searchDir, entry))
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return dependentPackages
+  })
+
+/**
+ * Gets the current backend package path (where Convex is running).
+ *
+ * @param fs - FileSystem service instance
+ * @param path - Path service instance
+ * @param monorepoRoot - Root directory of the monorepo
+ * @returns Effect that resolves to the absolute path of the backend package
+ * @since 1.0.0
+ * @internal
+ */
+const getCurrentBackendPath = (
+  _fs: FileSystem.FileSystem,
+  path: Path.Path,
+  _monorepoRoot: string
+) =>
+  Effect.gen(function* () {
+    // The backend is where the command is currently running from
+    const currentDir = process.cwd()
+
+    // Resolve to absolute path for comparison
+    return path.resolve(currentDir)
+  })
 
 /**
  * Finds the monorepo root directory by looking for package.json with workspaces.
@@ -70,11 +238,11 @@ export class ConfectTypeGeneratorService extends Effect.Service<ConfectTypeGener
  * @internal
  */
 const findMonorepoRoot = (
-  fs: FileSystem.FileSystem,
-  path: Path.Path,
   startDir: string
 ) =>
   Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem
+    const path = yield* Path.Path
     let currentDir = startDir
 
     while (currentDir !== path.dirname(currentDir)) {
@@ -109,11 +277,11 @@ const findMonorepoRoot = (
  * @internal
  */
 const getBackendPackageName = (
-  fs: FileSystem.FileSystem,
-  path: Path.Path,
   currentDir: string
 ) =>
   Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem
+    const path = yield* Path.Path
     const packageJsonPath = path.join(currentDir, 'package.json')
     const exists = yield* fs.exists(packageJsonPath)
 
@@ -141,21 +309,29 @@ const getBackendPackageName = (
  * @internal
  */
 const createEnvironmentFiles = (
-  fs: FileSystem.FileSystem,
-  path: Path.Path,
   _typesPath: string
 ) =>
   Effect.gen(function* () {
-    const monorepoRoot = yield* findMonorepoRoot(fs, path, process.cwd())
-    const appDirs = ['apps/native', 'apps/web']
+    const fs = yield* FileSystem.FileSystem
+    const path = yield* Path.Path
+    const monorepoRoot = yield* findMonorepoRoot(process.cwd())
 
-    for (const appDir of appDirs) {
+    // Detect if this is a monorepo and get app directories dynamically
+    const { isMonorepo, appDirectories } = yield* detectAppDirectories(fs, path, monorepoRoot)
+
+    if (!isMonorepo) {
+      // Not a monorepo - skip environment file generation
+      return
+    }
+
+    const backendPackageName = yield* getBackendPackageName(process.cwd())
+
+    for (const appDir of appDirectories) {
       const appPath = path.join(monorepoRoot, appDir)
       const exists = yield* fs.exists(appPath)
 
       if (exists) {
         const envFilePath = path.join(appPath, 'confect-env.d.ts')
-        const backendPackageName = yield* getBackendPackageName(fs, path, process.cwd())
 
         const content = `// Auto-generated by confect-generate - loads Confect error types automatically
 // This file should be committed to version control for other developers and CI/CD
