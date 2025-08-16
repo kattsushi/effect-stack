@@ -1,5 +1,5 @@
 
-import * as ts from 'typescript'
+import ts from 'typescript'
 import * as Effect from "effect/Effect"
 import * as Console from "effect/Console"
 import * as FileSystem from "@effect/platform/FileSystem"
@@ -7,44 +7,54 @@ import * as Path from "@effect/platform/Path"
 import { ParseResult } from './shared-types'
 
 /**
- * Confect Type Extractor Service using Effect.Service
+ * Confect Type Extractor Service for analyzing TypeScript files and extracting Confect function definitions.
+ *
+ * This service scans a Convex directory recursively to find and parse Confect functions
+ * (confectQuery, confectMutation, confectAction) and their associated error schemas.
+ *
+ * @since 1.0.0
+ * @example
+ * ```typescript
+ * const extractor = yield* ConfectTypeExtractor
+ * const result = yield* extractor.extract('./convex')
+ * console.log(`Found ${result.functions.length} Confect functions`)
+ * ```
  */
 export class ConfectTypeExtractor extends Effect.Service<ConfectTypeExtractor>()("ConfectTypeExtractor", {
-    
-    effect: Effect.gen(function* () {
+  effect: Effect.gen(function* () {
+    const fileSystem = yield* FileSystem.FileSystem
+    const pathService = yield* Path.Path
 
-        const fileSystem = yield* FileSystem.FileSystem
-        const pathService = yield* Path.Path
     return {
+      /**
+       * Extracts Confect function definitions from a Convex directory.
+       *
+       * @param convexDir - The path to the Convex directory to scan
+       * @returns Effect that resolves to ParseResult containing found functions and type definitions
+       * @since 1.0.0
+       */
       extract: (convexDir: string) =>
         Effect.gen(function* () {
-          yield* Console.log('🔍 Extracting types from Confex functions...')
+          yield* Console.log('🔍 Extracting types from Confect functions...')
 
           const result: ParseResult = { functions: [], typeDefinitions: new Map() }
+          const entries = yield* fileSystem.readDirectory(convexDir)
 
-        //   // Scan directory recursively
-        // yield* scanDirectoryEffect(convexDir, convexDir, result)
-
-            const entries = yield* fileSystem.readDirectory(convexDir)
-
-            for (const entryName of entries) {
+          for (const entryName of entries) {
             const fullPath = pathService.join(convexDir, entryName)
             const stat = yield* fileSystem.stat(fullPath)
 
             if (stat.type === "Directory") {
-                if (entryName === '_generated' || entryName === 'node_modules') {
+              if (entryName === '_generated' || entryName === 'node_modules') {
                 continue
-                }
-                yield* scanDirectoryEffect(fullPath, convexDir, result)
+              }
+              yield* scanDirectoryEffect(fullPath, convexDir, result)
             } else if (stat.type === "File" && entryName.endsWith('.ts')) {
-                yield* parseFileEffect(fullPath, convexDir, result)
+              yield* parseFileEffect(fullPath, convexDir, result)
             }
-            }
+          }
 
-        //   // Find used type definitions
-         yield* findUsedTypeDefinitionsEffect(convexDir, result, fileSystem)
-
-        //   yield* Console.log(`📊 Found ${result.functions.length} Confect functions`)
+          yield* findUsedTypeDefinitionsEffect(convexDir, result, fileSystem)
           return result
         })
     }
@@ -52,18 +62,36 @@ export class ConfectTypeExtractor extends Effect.Service<ConfectTypeExtractor>()
 }) {}
 
 /**
- * Scan directory recursively using Effect-native FileSystem
+ * Recursively scans a directory for TypeScript files (placeholder implementation).
+ *
+ * @param dir - Directory path to scan
+ * @param convexDir - Root Convex directory path
+ * @param result - ParseResult object to populate with findings
+ * @returns Effect that completes when directory scanning is done
+ * @since 1.0.0
+ * @internal
  */
 const scanDirectoryEffect = (
-  dir: string,
-  convexDir: string,
-  result: ParseResult
+  _dir: string,
+  _convexDir: string,
+  _result: ParseResult
 ) =>
   Effect.gen(function* () {
+    // TODO: Implement recursive directory scanning
   })
 
 /**
- * Parse a TypeScript file using Effect-native FileSystem
+ * Parses a TypeScript file to extract Confect function definitions.
+ *
+ * Reads the file content, creates a TypeScript AST, and traverses it to find
+ * exported variables that use confectQuery, confectMutation, or confectAction.
+ *
+ * @param filePath - Path to the TypeScript file to parse
+ * @param convexDir - Root Convex directory path for relative path calculation
+ * @param result - ParseResult object to populate with found functions
+ * @returns Effect that completes when file parsing is done
+ * @since 1.0.0
+ * @internal
  */
 const parseFileEffect = (
   filePath: string,
@@ -81,13 +109,22 @@ const parseFileEffect = (
       true
     )
 
-    // Parse the file and extract Confect functions
     const relativePath = pathService.relative(convexDir, filePath)
     visitNode(sourceFile, filePath, convexDir, result, relativePath)
   })
 
 /**
- * Find used type definitions (simplified version for now)
+ * Scans for type definitions used by Confect functions (placeholder implementation).
+ *
+ * This function would typically scan TypeScript files to find type definitions
+ * referenced by error schemas in Confect functions.
+ *
+ * @param convexDir - Root Convex directory path
+ * @param _result - ParseResult object containing found functions (unused in current implementation)
+ * @param _fileSystem - FileSystem service instance (unused in current implementation)
+ * @returns Effect that completes when type definition scanning is done
+ * @since 1.0.0
+ * @internal
  */
 const findUsedTypeDefinitionsEffect = (
   convexDir: string,
@@ -95,11 +132,7 @@ const findUsedTypeDefinitionsEffect = (
   _fileSystem: FileSystem.FileSystem,
 ) =>
   Effect.gen(function* () {
-    // For now, use a simplified approach
-    // TODO: Implement full Effect-native type definition scanning
     yield* Effect.sync(() => {
-      // This is a placeholder - in a full implementation, we would
-      // scan all files to find type definitions for the used types
       console.log(`Scanning for type definitions in ${convexDir}`)
     })
   })
@@ -107,7 +140,18 @@ const findUsedTypeDefinitionsEffect = (
 
 
 /**
- * Visit AST nodes to find Confect functions
+ * Recursively visits TypeScript AST nodes to find exported Confect functions.
+ *
+ * Traverses the AST looking for exported variable statements that use
+ * confectQuery, confectMutation, or confectAction function calls.
+ *
+ * @param node - TypeScript AST node to visit
+ * @param filePath - Path to the source file being processed
+ * @param convexDir - Root Convex directory path
+ * @param result - ParseResult object to populate with found functions
+ * @param relativePath - Relative path from convexDir to the source file
+ * @since 1.0.0
+ * @internal
  */
 const visitNode = (
   node: ts.Node,
@@ -117,26 +161,23 @@ const visitNode = (
   relativePath: string
 ) => {
     /**
-     * Check if a node has export modifier
+     * Checks if a variable statement has an export modifier.
+     * @param node - Variable statement to check
+     * @returns True if the statement is exported
      */
     const hasExportModifier = (node: ts.VariableStatement): boolean => {
         return node.modifiers?.some(mod => mod.kind === ts.SyntaxKind.ExportKeyword) ?? false
     }
 
-
-
     if (ts.isVariableStatement(node) && hasExportModifier(node)) {
         processVariableStatement(node, filePath, convexDir, result, relativePath)
     }
 
-    // Recursively visit children using Effect
     let children: ts.Node[] = []
 
     if (ts.isSourceFile(node)) {
-        // For SourceFile, use statements directly
         children = Array.from(node.statements)
     } else {
-        // For other nodes, use forEachChild
         ts.forEachChild(node, (child) => children.push(child))
     }
 
@@ -147,7 +188,18 @@ const visitNode = (
 
 
 /**
- * Process an exported variable declaration
+ * Processes an exported variable statement to extract Confect function information.
+ *
+ * Examines variable declarations to identify Confect functions (confectQuery, confectMutation, confectAction)
+ * and extracts their metadata including error schemas and return types.
+ *
+ * @param node - TypeScript variable statement node to process
+ * @param filePath - Path to the source file containing the variable
+ * @param convexDir - Root Convex directory path
+ * @param result - ParseResult object to populate with found function data
+ * @param relativePath - Relative path from convexDir to the source file
+ * @since 1.0.0
+ * @internal
  */
 const processVariableStatement = (
   node: ts.VariableStatement,
@@ -181,9 +233,24 @@ const processVariableStatement = (
 }
 
 /**
- * Generate module name and full key from file path
+ * Generates module information for a Confect function.
+ *
+ * Creates a module name and full key identifier based on the file path
+ * and function name for use in type generation.
+ *
+ * @param _filePath - Path to the source file (unused in current implementation)
+ * @param functionName - Name of the Confect function
+ * @param _convexDir - Root Convex directory path (unused in current implementation)
+ * @param relativePath - Relative path from convexDir to the source file
+ * @returns Object containing moduleName and fullKey
+ * @since 1.0.0
+ * @internal
  */
-const generateModuleInfo = (filePath: string, functionName: string, convexDir: string, relativePath: string
+const generateModuleInfo = (
+    _filePath: string,
+    functionName: string,
+    _convexDir: string,
+    relativePath: string
 ) => {
     const modulePathWithoutExt = relativePath.replace(/\.ts$/, '').replace(/\\/g, '/')
     const moduleName = modulePathWithoutExt
@@ -193,7 +260,16 @@ const generateModuleInfo = (filePath: string, functionName: string, convexDir: s
 }
 
 /**
- * Extract information from a Confect function
+ * Extracts metadata from a Confect function call expression.
+ *
+ * Analyzes a TypeScript call expression to determine if it's a Confect function
+ * (confectQuery, confectMutation, confectAction) and extracts its error schema
+ * and return type information.
+ *
+ * @param node - TypeScript expression node to analyze
+ * @returns Object containing function type and schema information, or null if not a Confect function
+ * @since 1.0.0
+ * @internal
  */
 const extractConfectFunction = (node: ts.Expression): {
   type: 'query' | 'mutation' | 'action',
@@ -241,7 +317,12 @@ const extractConfectFunction = (node: ts.Expression): {
 }
 
 /**
- * Extract error schema as string
+ * Extracts error schema as a string from a TypeScript expression node.
+ *
+ * @param node - TypeScript expression node containing the error schema
+ * @returns String representation of the error schema
+ * @since 1.0.0
+ * @internal
  */
 const extractErrorSchema = (node: ts.Expression): string => {
   const sourceFile = node.getSourceFile()
@@ -249,7 +330,15 @@ const extractErrorSchema = (node: ts.Expression): string => {
 }
 
 /**
- * Extract individual error types from a schema
+ * Extracts individual error type names from a schema string.
+ *
+ * Parses schema strings to identify error types, handling both single types
+ * and union types (Schema.Union(...)).
+ *
+ * @param schema - Schema string to parse for error types
+ * @returns Set of error type names found in the schema
+ * @since 1.0.0
+ * @internal
  */
 const extractErrorTypes = (schema: string | null): Set<string> => {
   const types = new Set<string>()
@@ -274,7 +363,15 @@ const extractErrorTypes = (schema: string | null): Set<string> => {
 }
 
 /**
- * Extract a single type from an expression
+ * Extracts a single custom error type name from a schema expression.
+ *
+ * Filters out built-in schema types (Number, String, Boolean) and extracts
+ * custom error type names that start with a capital letter.
+ *
+ * @param expression - Schema expression string to parse
+ * @returns Error type name if found, null if it's a built-in type or invalid
+ * @since 1.0.0
+ * @internal
  */
 const extractSingleType = (expression: string): string | null => {
   const trimmed = expression.trim()

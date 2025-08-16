@@ -1,4 +1,25 @@
 #!/usr/bin/env bun
+
+/**
+ * @fileoverview Confect CLI tool for generating TypeScript error types from Confect functions.
+ *
+ * This CLI tool scans Convex directories for Confect functions and generates TypeScript
+ * type definitions that provide compile-time type safety for error handling.
+ *
+ * @since 1.0.0
+ * @example
+ * ```bash
+ * # Generate types from default convex directory
+ * confect-generate
+ *
+ * # Generate types with custom paths
+ * confect-generate --convex-dir ./my-convex --output ./my-types.d.ts
+ *
+ * # Watch mode for development
+ * confect-generate --watch
+ * ```
+ */
+
 import * as Console from "effect/Console"
 import * as Effect from "effect/Effect"
 import * as Options from "@effect/cli/Options"
@@ -6,30 +27,44 @@ import * as Command from "@effect/cli/Command"
 import * as Stream from "effect/Stream"
 import * as BunContext from "@effect/platform-bun/BunContext"
 import * as BunRuntime from "@effect/platform-bun/BunRuntime"
-
 import * as FileSystem from "@effect/platform/FileSystem"
 import { ConfectTypeGeneratorService } from './generate-error-types'
 import { ConfectTypeExtractor } from "./confect-type-extractor"
 
+/**
+ * CLI option for specifying the Convex directory path.
+ * @since 1.0.0
+ */
 const convexDirOption = Options.text("convex-dir").pipe(
   Options.withAlias("d"),
   Options.withDefault("./convex"),
   Options.withDescription("Convex functions directory")
 )
 
+/**
+ * CLI option for specifying the output file path.
+ * @since 1.0.0
+ */
 const outputOption = Options.text("output").pipe(
   Options.withAlias("o"),
   Options.withDefault("./confect-generated-env.d.ts"),
   Options.withDescription("Output file path")
 )
 
+/**
+ * CLI option for enabling watch mode.
+ * @since 1.0.0
+ */
 const watchOption = Options.boolean("watch").pipe(
   Options.withAlias("w"),
   Options.withDefault(false),
   Options.withDescription("Watch mode - automatically regenerate on changes")
 )
 
-
+/**
+ * Main CLI command for generating Confect error types.
+ * @since 1.0.0
+ */
 const generateCommand = Command.make("confect-generate", {
   convexDir: convexDirOption,
   output: outputOption,
