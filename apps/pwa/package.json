@@ -30,6 +30,8 @@
     "jsdom": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "@vite-pwa/assets-generator": "catalog:",
     "vitest": "catalog:",
     "web-vitals": "catalog:"
   }
