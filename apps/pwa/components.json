@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "../../packages/ui/base-web/src/styles/global.css",
+    "baseColor": "zinc",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@monorepo/ui-base-web/components/primitives",
+    "utils": "@monorepo/ui-base-web/lib/utils",
+    "ui": "@monorepo/ui-base-web/components/primitives",
+    "lib": "@monorepo/ui-base-web/utils",
+    "hooks": "@monorepo/ui-base-web/hooks"
+  },
+  "registries": {
+    "@basecn": "https://basecn.dev/r/{name}.json"
+  }
+}

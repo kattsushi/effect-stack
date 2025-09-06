@@ -6,6 +6,8 @@ import ReactDOM from 'react-dom/client'
 import { routeTree } from './routeTree.gen'
 
 import './styles.css'
+import './index.css'
+import '@monorepo/ui-base-web/globals.css'
 import reportWebVitals from './report-web-vitals.ts'
 
 // Create a new router instance

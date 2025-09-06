@@ -1,0 +1,42 @@
+{
+  "name": "@monorepo/ui-base-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./globals.css": "./src/styles/globals.css",
+    "./lib/*": "./src/lib/*.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./blocks/*": "./src/blocks/*.ts",
+    "./components/primitives/*": "./src/components/primitives/*.tsx"
+  },
+  "scripts": {
+    "shadcn": "TS_NODE_PROJECT=tsconfig.lib.json bunx shadcn@latest"
+  },
+  "dependencies": {
+    "@base-ui-components/react": "1.0.0-beta.3",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-form": "1.15.2",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "next-themes": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "tw-animate-css": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {}
+}

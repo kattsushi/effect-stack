@@ -2,7 +2,7 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "paths": {
-      "@monorepo/ui-web/*": ["./../../packages/ui/web/src/*"]
+      "@monorepo/ui-base-web/*": ["./../../packages/ui/base-web/src/*"]
     }
   }
 }

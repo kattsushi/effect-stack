@@ -1,3 +1,4 @@
+import { Button } from '@monorepo/ui-base-web/components/primitives/button'
 import { createFileRoute } from '@tanstack/react-router'
 import logo from '../logo.svg'
 
@@ -10,6 +11,8 @@ function App() {
     <div className="text-center">
       <header className="flex min-h-screen flex-col items-center justify-center bg-[#282c34] text-[calc(10px+2vmin)] text-white">
         <img alt="logo" className="pointer-events-none h-[40vmin] animate-[spin_20s_linear_infinite]" src={logo} />
+
+        <Button> Test button</Button>
         <p>
           Edit <code>src/routes/index.tsx</code> and save to reload.
         </p>

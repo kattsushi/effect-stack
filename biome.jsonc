@@ -79,6 +79,16 @@
   },
   "overrides": [
     {
+      "includes": ["packages/ui/base-web/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useButtonType": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["!**/dist", "packages/ui/native/**/*.tsx"],
       "linter": {
         "rules": {
