@@ -1,0 +1,29 @@
+{
+  "$schema": "./../../node_modules/nx/schemas/project-schema.json",
+  "name": "@monorepo/pwa",
+  "projectType": "application",
+  "sourceRoot": "apps/pwa/src",
+  "targets": {
+    "dev:watch": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["pnpm nx dev pwa", "nx run @monorepo/pwa:watch-deps "],
+        "cwd": "apps/pwa",
+        "parallel": true
+      }
+    },
+    "dev:server:watch": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm nx serve pwa",
+          "pnpm vite",
+          "pnpm nx run @monorepo/pwa:watch-deps "
+        ],
+        "cwd": "apps/pwa",
+        "parallel": true
+      }
+    }
+  },
+  "tags": ["react", "pwa", "livestore", "localfirst"]
+}

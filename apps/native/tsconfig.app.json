@@ -18,7 +18,16 @@
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
   "references": [
     {
+      "path": "../../packages/shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/confect"
+    },
+    {
       "path": "../backend/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/ui/native"
     }
   ]
 }

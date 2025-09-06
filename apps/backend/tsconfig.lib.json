@@ -10,5 +10,12 @@
   },
   "include": ["convex/**/*"],
   "exclude": ["convex/_generated"],
-  "references": []
+  "references": [
+    {
+      "path": "../../packages/shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/confect"
+    }
+  ]
 }

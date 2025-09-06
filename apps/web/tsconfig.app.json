@@ -20,7 +20,13 @@
   ],
   "references": [
     {
-      "path": "../../packages/ui/web"
+      "path": "../../packages/shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/confect"
+    },
+    {
+      "path": "../../packages/ui/web/tsconfig.lib.json"
     },
     {
       "path": "../backend/tsconfig.lib.json"
