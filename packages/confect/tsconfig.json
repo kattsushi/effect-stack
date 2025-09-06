@@ -5,6 +5,7 @@
         "name": "@effect/language-service"
       }
     ],
+    "jsx": "preserve",
     "importsNotUsedAsValues": "remove",
     "exactOptionalPropertyTypes": false,
     "lib": ["ESNext", "DOM"],
@@ -12,6 +13,10 @@
     "moduleResolution": "Bundler",
     "module": "ESNext"
   },
+  "include": [
+    "src/**/*",
+    "test/**/*"
+  ],
   "exclude": [
     "coverage",
     "dist",

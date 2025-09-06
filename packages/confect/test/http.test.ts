@@ -1,62 +1,62 @@
-import { describe, expect } from '@effect/vitest'
-import { Effect } from 'effect'
-import { TestConvexService } from './TestConvexService'
-import { effect } from './test_utils'
+import { describe, expect } from "@effect/vitest";
+import { Effect } from "effect";
+import { TestConvexService } from "./TestConvexService";
+import { effect } from "./test_utils";
 
-describe('http', () => {
-  describe('/', () => {
-    effect('user-defined endpoint', () =>
+describe("http", () => {
+  describe("/", () => {
+    effect("user-defined endpoint", () =>
       Effect.gen(function* () {
-        const c = yield* TestConvexService
+        const c = yield* TestConvexService;
 
-        const response = yield* c.fetch('/get', { method: 'GET' })
+        const response = yield* c.fetch("/get", { method: "GET" });
 
-        const jsonBody = yield* Effect.promise(() => response.json())
-        const status = response.status
+        const jsonBody = yield* Effect.promise(() => response.json());
+        const status = response.status;
 
-        expect(status).toEqual(200)
-        expect(jsonBody).toEqual('Hello, world!')
+        expect(status).toEqual(200);
+        expect(jsonBody).toEqual("Hello, world!");
       }),
-    )
+    );
 
-    effect('api docs', () =>
+    effect("api docs", () =>
       Effect.gen(function* () {
-        const c = yield* TestConvexService
+        const c = yield* TestConvexService;
 
-        const response = yield* c.fetch('/docs', { method: 'GET' })
+        const response = yield* c.fetch("/docs", { method: "GET" });
 
-        const status = response.status
+        const status = response.status;
 
-        expect(status).toEqual(200)
+        expect(status).toEqual(200);
       }),
-    )
-  })
+    );
+  });
 
-  describe('/path-prefix', () => {
-    effect('user-defined endpoint', () =>
+  describe("/path-prefix", () => {
+    effect("user-defined endpoint", () =>
       Effect.gen(function* () {
-        const c = yield* TestConvexService
+        const c = yield* TestConvexService;
 
-        const response = yield* c.fetch('/path-prefix/get', { method: 'GET' })
+        const response = yield* c.fetch("/path-prefix/get", { method: "GET" });
 
         // const jsonBody = yield* Effect.promise(() => response.json());
-        const status = response.status
+        const status = response.status;
 
-        expect(status).toEqual(200)
+        expect(status).toEqual(200);
         // expect(jsonBody).toEqual("Hello, world!");
       }),
-    )
+    );
 
-    effect('api docs', () =>
+    effect("api docs", () =>
       Effect.gen(function* () {
-        const c = yield* TestConvexService
+        const c = yield* TestConvexService;
 
-        const response = yield* c.fetch('/path-prefix/docs', { method: 'GET' })
+        const response = yield* c.fetch("/path-prefix/docs", { method: "GET" });
 
-        const status = response.status
+        const status = response.status;
 
-        expect(status).toEqual(200)
+        expect(status).toEqual(200);
       }),
-    )
-  })
-})
+    );
+  });
+});

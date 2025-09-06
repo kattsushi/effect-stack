@@ -15,22 +15,24 @@
   "files": [
     "src",
     "dist",
+    "bin",
     "README.md",
     "LICENSE"
   ],
   "exports": {
     "./server": "./src/server/index.ts",
     "./react": "./src/react/index.ts",
-    "./react/effect": "./src/react/effect.ts"
+    "./react/effect-atom": "./src/react/effect-atom.tsx"
   },
   "bin": {
-    "confect-generate": "./bin/confect-generate.js"
+    "confect-generate": "./bin/confect-generate"
   },
   "scripts": {
     "convex-codegen": "pnpm convex codegen",
     "typecheck": "tsc --noEmit --project tsconfig.json",
-    "test": "vitest --run --typecheck=false --coverage",
-    "test:watch": "vitest --typecheck=false --coverage"
+    "test": "vitest --run --typecheck --coverage",
+    "test:watch": "vitest --typecheck --coverage",
+    "build:executable": "echo '🔨 Building Confect CLI executable...' && mkdir -p bin && pnpm dlx bun build --compile --outfile=bin/confect-generate ./src/cli/main.ts && echo '✅ Build completed!' && ls -la bin/confect-generate"
   },
   "keywords": [
     "effect",
@@ -39,15 +41,25 @@
   "author": "RJ Dellecese",
   "license": "ISC",
   "devDependencies": {
+    "@effect/cli": "0.69.0",
     "@effect/language-service": "catalog:",
-    "@effect/platform-node": "catalog:",
-    "@effect/platform": "catalog:",
+    "@effect/platform-node": "0.95.0",
+    "@effect/platform-bun": "0.78.0",
+    "@effect/platform-node-shared": "0.48.0",
+    "@effect/cluster": "0.47.0",
+    "@effect/platform": "0.90.2",
     "@effect/vitest": "catalog:",
+    "@testing-library/react": "^16.0.1",
     "@types/node": "24.1.0",
+    "@types/react": "^19.0.0",
     "@vitest/coverage-v8": "3.2.4",
+    "bun": "^1.2.19",
     "chokidar": "^4.0.0",
     "convex-test": "0.0.38",
     "dotenv": "17.2.1",
+    "jsdom": "^25.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tsx": "^4.0.0",
     "typescript": "catalog:",
     "vitest": "3.2.4"
@@ -55,6 +67,7 @@
   "peerDependencies": {
     "@effect/platform": "catalog:",
     "convex": "catalog:",
+    "@convex-dev/react-query": "catalog:",
     "effect": "catalog:"
   },
   "engines": {

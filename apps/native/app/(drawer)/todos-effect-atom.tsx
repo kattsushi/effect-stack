@@ -1,51 +1,28 @@
-import { Atom, Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
+import { Result, useAtom, useAtomSet, useAtomValue } from '@effect-atom/atom-react'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@monorepo/backend/convex/_generated/api'
 import type { Id } from '@monorepo/backend/convex/_generated/dataModel'
-import { useAction, useMutation, useQuery } from '@monorepo/confect/react'
+import {
+  ConfectProvider,
+  useAtomSetConfect,
+  useAtomSetConfectAction,
+  useAtomValueConfect,
+} from '@monorepo/confect/react/effect-atom'
 import * as Array from 'effect/Array'
-import * as Effect from 'effect/Effect'
-
 import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { getFirstTodoAtom, todoTextAtom } from '@/atoms/todos'
 import { Container } from '@/components/container'
-import { ApiService } from '@/lib/api'
 import { atomRuntime } from '@/lib/runtime'
 
-const todoTextAtom = Atom.make('')
-// Create a simple atom that just executes the effect
-const getFirstTodoAtom = atomRuntime.fn(
-  Effect.fnUntraced(function* () {
-    const client = yield* ApiService
-    return yield* client.notes.getFirst()
-  }),
-)
-
-export default function TodosScreen() {
+function TodosScreen() {
   const [newTodoText, setNewTodoText] = useAtom(todoTextAtom)
 
-  const todosQueryEffect = useQuery(api, 'functions', 'listTodos')({})
-  const todosQueryAtom = atomRuntime.atom(todosQueryEffect)
-  const todosResult = useAtomValue(todosQueryAtom)
-
-  const toggleActionEffect = useAction(api, 'functions', 'toggleTodo')
-  const handleToggleTodoAtom = atomRuntime.fn(toggleActionEffect)
-  const handleToggleTodo = useAtomSet(handleToggleTodoAtom, { mode: 'promise' })
-
+  const todosResult = useAtomValueConfect(api, 'functions', 'listTodos', {})
+  const addTodo = useAtomSetConfect(api, 'functions', 'insertTodo')
+  const handleToggleTodo = useAtomSetConfectAction(api, 'functions', 'toggleTodo')
+  const handleDeleteTodo = useAtomSetConfect(api, 'functions', 'deleteTodo')
   const firstTodoResult = useAtomValue(getFirstTodoAtom)
   const handleGetFirstTodo = useAtomSet(getFirstTodoAtom, { mode: 'promise' })
-
-  const createTodo = useMutation(api, 'functions', 'insertTodo')
-  const handleAddTodoAtom = atomRuntime.fn(
-    Effect.fn(function* (text: string, get: Atom.FnContext) {
-      yield* createTodo({ text })
-      get.set(todoTextAtom, '')
-    }),
-  )
-  const [addNewTodoResult, setAddNewTodo] = useAtom(handleAddTodoAtom, { mode: 'promise' })
-
-  const removeTodoEffect = useMutation(api, 'functions', 'deleteTodo')
-  const handleDeleteTodoAtom = atomRuntime.fn(removeTodoEffect)
-  const handleDeleteTodo = useAtomSet(handleDeleteTodoAtom, { mode: 'promise' })
 
   const handleDeleteTodoWithAlert = (id: Id<'todos'>) => {
     Alert.alert('Delete Todo', 'Are you sure you want to delete this todo?', [
@@ -58,8 +35,12 @@ export default function TodosScreen() {
     ])
   }
 
-  const handleAddTodo = () => setAddNewTodo(newTodoText)
-  const handleSubmitEditing = () => setAddNewTodo(newTodoText)
+  const handleAddTodo = () => {
+    if (newTodoText.trim()) {
+      addTodo({ text: newTodoText.trim() })
+      setNewTodoText('') // Clear input after adding
+    }
+  }
 
   return (
     <Container>
@@ -74,7 +55,6 @@ export default function TodosScreen() {
                 <TextInput
                   className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-foreground"
                   onChangeText={setNewTodoText}
-                  onSubmitEditing={handleSubmitEditing}
                   placeholder="Add a new task..."
                   placeholderTextColor="#6b7280"
                   returnKeyType="done"
@@ -82,7 +62,7 @@ export default function TodosScreen() {
                 />
                 <TouchableOpacity
                   className={`rounded-md px-4 py-2 ${newTodoText.trim() ? 'bg-primary' : 'bg-muted'}`}
-                  disabled={!newTodoText.trim() || addNewTodoResult.waiting}
+                  disabled={!newTodoText.trim()}
                   onPress={handleAddTodo}
                 >
                   <Text className="font-medium text-white">Add</Text>
@@ -138,7 +118,10 @@ export default function TodosScreen() {
                 .orNull()}
             </View>
 
-            <TouchableOpacity className="mt-4 rounded-md bg-secondary px-4 py-2" onPress={() => handleGetFirstTodo()}>
+            <TouchableOpacity
+              className="mt-4 rounded-md bg-secondary px-4 py-2"
+              onPress={() => handleGetFirstTodo(undefined)}
+            >
               <Text className="text-center font-medium text-secondary-foreground">Get First Todo</Text>
             </TouchableOpacity>
 
@@ -153,5 +136,14 @@ export default function TodosScreen() {
         </View>
       </ScrollView>
     </Container>
+  )
+}
+
+// Export with ConfectProvider wrapper
+export default function TodosScreenWithProvider() {
+  return (
+    <ConfectProvider atomRuntime={atomRuntime}>
+      <TodosScreen />
+    </ConfectProvider>
   )
 }

@@ -13,7 +13,7 @@ import {
 import { TodoSchema } from './functions.schemas'
 
 export class NotFoundError extends Schema.TaggedError<NotFoundError>('NotFoundError')('NotFoundError', {}) {
-  override get message(): string {
+  get message(): string {
     return 'Not Found'
   }
 }
@@ -25,6 +25,12 @@ export const insertTodo = confectMutation({
   handler: ({ text }) =>
     Effect.gen(function* () {
       const writer = yield* ConfectDatabaseWriter
+
+      // Use Math.random() instead of Effect's Random service since it's not provided in confect layers
+      const random = Math.random() * 0.5 + 0.5 // Generate random number between 0.5 and 1
+      if (random > 0.7) {
+        return yield* Effect.fail(new NotFoundError())
+      }
 
       return yield* writer
         .insert('todos', { text, tag: 'Todo' as const })
@@ -39,6 +45,12 @@ export const listTodos = confectQuery({
   handler: () =>
     Effect.gen(function* () {
       const reader = yield* ConfectDatabaseReader
+
+      const random = Math.random() * 0.5 + 0.5 // Generate random number between 0.5 and 1
+
+      if (random > 0.7) {
+        return yield* Effect.fail(new NotFoundError())
+      }
 
       return yield* reader
         .table('todos')

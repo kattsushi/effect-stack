@@ -3,7 +3,8 @@ import { Link } from '@tanstack/react-router'
 function Header() {
   const links = [
     { to: '/', label: 'Home' },
-    { to: '/todos', label: 'Todos' },
+    { to: '/todos-effect-atom', label: 'Todos (@effect-atom)' },
+    { to: '/todos-effect-only', label: 'Todos (Direct Effects)' },
   ]
 
   return (

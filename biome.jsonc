@@ -68,7 +68,8 @@
         }
       },
       "nursery": {
-        "noUnknownAtRule": "off"
+        "noUnknownAtRule": "off",
+        "noNestedComponentDefinitions": "off"
       },
       "performance": {
         "noNamespaceImport": "off"
