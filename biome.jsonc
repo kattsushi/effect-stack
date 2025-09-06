@@ -72,7 +72,8 @@
         "noNestedComponentDefinitions": "off"
       },
       "performance": {
-        "noNamespaceImport": "off"
+        "noNamespaceImport": "off",
+        "noImgElement": "off"
       }
     }
   },

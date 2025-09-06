@@ -50,5 +50,7 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "web-vitals": "catalog:"
-  }
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {}
 }
